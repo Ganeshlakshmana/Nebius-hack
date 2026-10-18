@@ -9,7 +9,7 @@
 - Shortlist Markdown export is implemented.
 
 ## Limits to demonstrate honestly
-- Chat is a deterministic router, not unrestricted LLM conversation. Research planning and follow-up use explicit rules, not model reasoning.
+- Chat is a deterministic router, not unrestricted LLM conversation. Research uses fixed search dimensions with rule-based and Nemotron incident candidates triggering follow-up.
 - Potential-concern keywords are investigation triggers, not verified allegations. Company identity, contradictory evidence, legal applicability and component certification require buyer review.
 - Original total-risk formula is unknown. Explanations use a fitted statistical surrogate, never an exact original formula.
 - Synthetic component assignments and simulated operations are demo overlays, not supplier capability or live events.
@@ -37,11 +37,18 @@ Latest local frontend-to-backend smoke: homepage, both challenge chat examples a
 6. Export the evidence report and shortlist memo.
 
 ## Research evidence update
-Optional buyer-supplied official domain, conservative incident-vs-policy triage, freshness labels, citation-linked decision actions and decision-packet export now implemented. Domain matches are anchors, not legal-entity verification. No model-based semantic understanding or independent corroboration is claimed. External evidence remains unverified.
+Optional buyer-supplied official domain, conservative incident-vs-policy triage, freshness labels, citation-linked decision actions and decision-packet export now implemented. Domain matches are anchors, not legal-entity verification. Nemotron adds source-linked semantic interpretation; independent corroboration is not established. External evidence remains unverified.
 
 ## Any-component sourcing workspace
 Open Sourcing after shortlisting suppliers. Enter component, application/specification, quantity and delivery date. Edit requirements and mark which are mandatory. Record per-supplier evidence references, reviewer names, scope rationale and validity dates. User attestation is not independent document verification. No requirement can be cleared with demo evidence, missing review metadata or evidence expiring before delivery. Failed mandatory checks block readiness regardless of score. Completed checks lead only to authorized review, never automatic award. Submitted packets are recorded in the local SQLite audit log; draft entries survive workspace navigation and reloads using session storage in the same browser tab. Clear the draft to start another purchase; export before closing the tab.
 
 Demo: shortlist the three challenge IDs, enter a custom component (for example a vibration isolator), and generate with missing evidence. Show that even the lowest-risk supplier has unresolved gates. Enter a failed requirement for one supplier and regenerate. Download the decision packet to preserve the brief, weights, risk scores, per-requirement status, evidence references and limitations. Demo evidence must be marked as such and cannot satisfy a real requirement.
 
-Evaluation total: 81 passing backend cases, including sourcing gate regressions. Token Factory inference remains pending valid credentials. Public deployment, authenticated reviewer identity and jury login remain outstanding.
+Evaluation total: 81 passing backend cases, including sourcing gate regressions. Token Factory Nemotron evidence review is integrated; scores and qualification gates remain deterministic. Public deployment, authenticated reviewer identity and jury login remain outstanding.
+
+## Nemotron evidence review
+One bounded Token Factory call reviews up to eight initial source excerpts. Nemotron thinking is disabled to keep the output within the demo token budget. Findings must match the schema, cite existing evidence IDs and quote exact source text. Unresolved identity cannot be promoted to a company incident. Invalid or unavailable model output falls back to rule-based research. Model findings remain advisory and cannot change scores or award readiness. UI and Markdown export expose model status, source-linked interpretations and buyer questions. Follow-up pages are not re-reviewed by the model.
+
+90 offline backend tests passed, including citation fabrication, quote fabrication, duplicate citations, identity upgrading and provider failure. TypeScript and production build passed. Live synthetic policy-versus-incident smoke passed; these tests do not prove general semantic accuracy.
+
+End-to-end live smoke through `/api/research`: Knorr-Bremse / braking systems returned HTTP 200, 17 sources, model status completed and one quote-validated finding from eight supplied excerpts. Decision remained review_required. Report ID: f44c1838-1731-4d7d-97ae-bb90f39d15e8 (local database only).

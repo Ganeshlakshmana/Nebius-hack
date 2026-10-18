@@ -4,6 +4,7 @@ import json
 import uuid
 import re
 from app.config.settings import settings
+from app.services.model_review import review_evidence
 from app.services.research_evidence import assess, decision, official_domain, canonical_url
 from app.db.sqlite_store import AppStore
 from app.services.events import AgentBus
@@ -55,7 +56,9 @@ class ResearchAgent:
         for item in timeline:
             item['extracted_excerpt'] = initial_pages.get(item['url'], '')[:6000]
             item.update(assess(item, company, domain))
-        candidates = [item for item in timeline if item['classification'] == 'reported_incident'][:2]
+        model_review = review_evidence(company, component, timeline)
+        model_candidates = {f['evidence_id'] for f in model_review['findings'] if f['classification'] == 'reported_incident'}
+        candidates = [item for item in timeline if item['classification'] == 'reported_incident' or item['evidence_id'] in model_candidates][:2]
         for candidate in candidates:
             # Company-scoped follow-up; untrusted page content never becomes query instructions.
             results = self.search.search(f'"{company}" rail incident investigation official statement resolution remediation', max_results=3)
@@ -92,7 +95,11 @@ class ResearchAgent:
                   "budget_used": {"searches": searches, "extracts": int(initial_extraction["status"] != "not_run") + int(extraction["status"] != "not_run"), "deep_dive_rounds": int(bool(candidates))},
                   "component": component, "component_qualification": "unverified" if component else None,
                   "dataset_match": None, "requested_supplier_id": supplier_id, "triggering_alert": triggering_alert}
+        report["model_review"] = model_review
+        report["limitations"].append("Model findings are advisory, not verified facts. Citation and quote validation does not establish semantic accuracy. Follow-up pages are not re-reviewed by the model.")
         report["decision"] = decision(report)
+        for finding in model_review["findings"]:
+            report["decision"]["actions"].append({"priority": "review", "action": finding["buyer_question"], "evidence_ids": [finding["evidence_id"]]})
         report["recommendations"] = report["decision"]["actions"]
         if component:
             report["limitations"].append("Search results do not establish component qualification or link this real company to an anonymized supplier.")

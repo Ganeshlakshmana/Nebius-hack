@@ -44,4 +44,4 @@ Download the decision packet.
 “The buyer leaves with the brief, weighted screening, unresolved requirements and evidence references. It supports authorized review; it never automatically awards a contract.”
 
 ## Present limitations honestly
-Chat currently uses deterministic supported routes. Model inference is pending credentials. Company identity anchors and reviewer statements are not independently verified. Public deployment, jury login and the actual screen recording are still submission tasks.
+Chat currently uses deterministic supported routes. Nemotron reviews source excerpts; validated citations are not proof that its interpretations are correct. Company identity anchors and reviewer statements are not independently verified. Public deployment, jury login and the actual screen recording are still submission tasks.
