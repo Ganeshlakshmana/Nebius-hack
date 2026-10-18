@@ -18,6 +18,12 @@ npx tsc --noEmit
 npm run build
 ```
 
+## Run the backend API
+
+The FastAPI service is in `backend/`. From the repository root, install it with `python -m pip install -e backend`, copy `.env.example` to `.env` and set private credentials, then start `python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000`. API docs are at `http://127.0.0.1:8000/docs`; health is at `http://127.0.0.1:8000/health`.
+
+The API loads `data/supplier_risk_dataset.csv` and permits the Vite frontend origin `http://127.0.0.1:5173`. **The current frontend still loads `public/suppliers.json`; frontend-to-API calls have not yet been wired.** See [backend/README.md](backend/README.md) for the backend setup and environment settings. Do not commit `.env` or provider credentials.
+
 ## Implemented
 
 - Siemens-inspired midnight-blue and cyan interface.
