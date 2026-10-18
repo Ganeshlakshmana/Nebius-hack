@@ -16,7 +16,7 @@ class NewsAgent:
         company = clean_search_term(company) if company else None
         query_target = company or supplier_id
         items = self.search.search(f'"{query_target}" recent supplier risk news', max_results=5) if company else []
-        signals = [{"dimension": "unclassified", "severity": "low", "summary": item["title"],
+        signals = [{"dimension": "unclassified", "severity": "unassessed", "summary": item["title"],
                     "url": item["url"], "published": item["published"], "triage_status": "unreviewed"}
                    for item in items]
         result = {"supplier_id": supplier_id, "company": company, "signals": signals,

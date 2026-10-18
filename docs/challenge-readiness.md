@@ -1,0 +1,35 @@
+# Siemens challenge readiness
+
+## Verified locally
+- Explore 10,000 suppliers, filter, rank, shortlist and compare up to 20.
+- Backend-grounded chat covers the two challenge examples. Financial Health results for SUPP_00012 / SUPP_00450 / SUPP_00731: 54 / 65 / 53.
+- Component screening uses illustrative, disclosed weights. It shows critical factors, missing qualification evidence, dimension-wise dominance and sensitivity across 16 weight scenarios. Scenario counts are not probabilities.
+- Research UI calls the backend. Tavily searches sources, retrieves up to three pages, and performs up to two targeted follow-up searches when concern keywords occur. Reports preserve links, dates where provided, execution outcomes, and limitations; downloadable as Markdown.
+- Real-company research is separate from the anonymous CSV. An anonymous ID is never used as a real-company search identity.
+- Shortlist Markdown export is implemented.
+
+## Limits to demonstrate honestly
+- Chat is a deterministic router, not unrestricted LLM conversation. Research planning and follow-up use explicit rules, not model reasoning.
+- Potential-concern keywords are investigation triggers, not verified allegations. Company identity, contradictory evidence, legal applicability and component certification require buyer review.
+- Original total-risk formula is unknown. Explanations use a fitted statistical surrogate, never an exact original formula.
+- Synthetic component assignments and simulated operations are demo overlays, not supplier capability or live events.
+- Public deployment with jury login and a two-minute recording remain outstanding. Public API authentication and abuse controls must be added before exposure; local CORS is not authentication.
+
+## Evaluation
+Run from the repository root:
+
+```sh
+OFFLINE_MODE=true backend/.venv/bin/python -m pytest backend/tests -q
+```
+
+41 regression cases passed locally. Includes challenge answers, six metric routes, unknown IDs, unsupported certification/price/capacity claims, missing scores, tied ranks, normalization, component sensitivity, follow-up research, anonymous identities, limits, escaping and simulated-feed behavior. CI runs offline; tests do not establish real-world supplier suitability or open-ended language coverage.
+
+Live smoke check: Knorr-Bremse / braking systems returned 19 sources, 7 searches, one extraction request and one follow-up round. This is an execution check, not a verified risk assessment.
+
+## Two-minute demo
+1. Explore the portfolio and shortlist the three challenge IDs.
+2. Ask the exact financial-risk question; show 53 / 54 / 65.
+3. Ask why SUPP_00018 has high TRI; disclose the fitted explanation.
+4. Ask for braking risk; show critical factors and decision-readiness checks.
+5. Research a real company, open a source and inspect the follow-up trail.
+6. Export the evidence report and shortlist memo.

@@ -25,3 +25,6 @@ How we measure whether the agent is right. Run existing tests with `python -m py
 | Fabricated findings | 0 |
 | Signals with URL | 100% |
 | Triage dimension accuracy | >= 85% (when built) |
+
+## Executable trust regressions
+`tests/test_trust_evals.py` covers metric faithfulness, unsupported claims, incomplete comparisons, weight normalization, research follow-up and unresolved anonymous identity. CI: `.github/workflows/trust-evals.yml`.

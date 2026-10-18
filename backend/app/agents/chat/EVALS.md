@@ -30,3 +30,6 @@ How we measure whether the agent is right. Run existing tests with `python -m py
 | Numeric faithfulness | 100% |
 | Correct refusal / clarification | >= 95% |
 | p95 latency (templated) | < 1 s |
+
+## Executable trust regressions
+`tests/test_trust_evals.py` covers metric faithfulness, unsupported claims, incomplete comparisons, weight normalization, research follow-up and unresolved anonymous identity. CI: `.github/workflows/trust-evals.yml`.

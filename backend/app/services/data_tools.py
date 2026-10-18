@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import Any
 from app.db.duckdb_store import SupplierStore
 from app.db.sqlite_store import AppStore
@@ -55,6 +56,11 @@ class DataTools:
             return {"error": "Unknown supplier IDs", "unknown_ids": sorted(set(ids) - found)}
         if custom_weights and set(custom_weights) - set(self.data.score_columns):
             return {"error": "custom_weights contains unsupported score columns"}
+        if custom_weights is not None:
+            if not custom_weights or any(not math.isfinite(v) or v < 0 for v in custom_weights.values()) or sum(custom_weights.values()) <= 0:
+                return {"error": "Weights must be finite, non-negative and have a positive total"}
+            total = sum(custom_weights.values())
+            custom_weights = {key: value / total for key, value in custom_weights.items()}
         for row in profiles:
             row["custom_score"] = (sum(float(row[k]) * float(v) for k, v in custom_weights.items())
                                    if custom_weights else None)

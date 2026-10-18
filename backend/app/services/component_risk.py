@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import math
 import re
+from app.services.decision_brief import decision_brief
 
 
 # Illustrative procurement priorities, not Siemens-approved engineering weights.
@@ -86,7 +87,8 @@ class ComponentRisk:
         for item in items:
             item["rank"] = None if item["component_score"] is None else 1 + sum(
                 other["component_score"] is not None and other["component_score"] < item["component_score"] for other in items)
-        return {"status": "complete", "component": label, "component_id": key, "items": items,
+        brief = decision_brief(items, weights)
+        return {"decision_brief": brief, "status": "complete", "component": label, "component_id": key, "items": items,
                 "weights": weights, "model_version": "component-screening-v1",
                 "methodology": "Weighted sum of supplier-level risk scores. Lower is better. Illustrative application-defined weights, not Siemens-approved or component test results.",
                 "limitations": ["Component capability, certifications, price, capacity and supplier-to-part mappings are absent from the dataset.",

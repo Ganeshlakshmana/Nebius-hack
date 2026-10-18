@@ -32,3 +32,6 @@ Hard limits and safety controls. 'Planned' and 'Gap' items are not enforced yet.
 | CORS | Only the local frontend origins (ports 3000 and 5173) may call the API from a browser. | Implemented |
 | User authentication | No user login on the public API (`require_agent_key` is only for future cross-process agent calls). | Gap: required before any non-local deployment |
 | Rate limiting | No request rate limits. | Gap |
+
+## Trust update
+Unknown IDs never produce partial chat rankings. Research/news severity is `unassessed`; uncalibrated numeric research confidence is omitted (`null`). Research uses bounded keyword-triggered follow-up and up to three page extractions; potential concerns are not verified findings. See `docs/challenge-readiness.md` for limits.

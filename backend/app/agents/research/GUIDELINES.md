@@ -8,7 +8,7 @@ Rules for how the agent (and anyone changing it) should behave.
 ## Agent-specific rules
 
 - Return `status: partial` and a plain `limitations` list until triage is implemented.
-- Every timeline item needs a URL; confidence for untriaged snippets stays low (0.35) and `is_red_flag` false.
+- Every timeline item needs a URL; confidence for untriaged snippets is null (not calibrated) and `is_red_flag` false.
 - With a component, add the limitation that results do not prove component qualification or the link to an anonymised supplier.
 - Respect the search budget; stop early rather than exceed it.
 - Emit agent events (`research_search_started`) so the UI can show progress.

@@ -30,16 +30,33 @@ class ChatAgent:
         if not ids:
             ids = list(dict.fromkeys(shortlist or []))
         lower = message.lower()
+        ids = list(dict.fromkeys(i.strip().upper() for i in ids))
+        if len(ids) > 20:
+            return {"answer": "Select at most 20 suppliers.", "status": "clarification_required", "components": [], "tool_calls": [], "validated": True}
+        if ids:
+            rows = self.tools.get_suppliers(ids)
+            missing = sorted(set(ids) - {r["supplierID"] for r in rows})
+            if missing:
+                return {"answer": "Some supplier IDs were not found. Correct the IDs before comparing; no partial ranking was produced.",
+                        "status": "clarification_required", "unknown_ids": missing, "components": [], "tool_calls": ["get_suppliers"], "validated": True}
+        if re.search(r"\b(certified|certification|iso|approved|price|cheapest|capacity|manufactures|guarantee|guaranteed)\b", lower):
+            return {"answer": "The supplied dataset does not verify component capability, certification, approval, price or available capacity. Request supplier evidence before an award decision. I can screen supplier risk using the available scores.",
+                    "status": "insufficient_evidence", "components": [], "tool_calls": ["get_suppliers"] if ids else [], "validated": True}
         if component or resolve_components(message) or re.search(r"\b(component|part|parts)\b", lower):
             return ComponentRisk(self.tools).chat_answer(component or message, ids)
         if len(ids) > 1:
-            by = "financial_health" if "financial" in lower else "total_risk"
+            metric_columns = {"financial": "Financial_Health_Score", "credit": "Credit_Rating_Score", "quality": "Quality_Risk_Score", "cyber": "Digital_Security_Score", "digital": "Digital_Security_Score", "compliance": "Compliance_Risk_Score", "safety": "Safety_Incident_Score"}
+            mentioned = list(dict.fromkeys(col for term, col in metric_columns.items() if term in lower))
+            if len(mentioned) > 1:
+                return {"answer": "Choose one risk metric, or select a component for a weighted comparison.", "status": "clarification_required", "components": [], "tool_calls": [], "validated": True}
+            value_column = mentioned[0] if mentioned else "Total_Risk_Index"
+            by = value_column.removesuffix("_Score").replace("_", " ")
             rows = self.tools.get_suppliers(ids)
-            rows.sort(key=lambda r: float(r["Financial_Health_Score"] if by == "financial_health" else r["Total_Risk_Index"]))
+            rows.sort(key=lambda r: (float(r[value_column]), r["supplierID"]))
             if not rows:
                 return {"answer": "No matching suppliers were found in the dataset.", "components": [], "tool_calls": ["get_suppliers"], "validated": True}
-            value_column = "Financial_Health_Score" if by == "financial_health" else "Total_Risk_Index"
-            answer = f"Lowest {by.replace('_', ' ')} risk in this set is {rows[0]['supplierID']} ({float(rows[0][value_column]):g}); "
+            winners = [r["supplierID"] for r in rows if r[value_column] == rows[0][value_column]]
+            answer = f"Lowest {by.replace('_', ' ')} risk in this set is {', '.join(winners)} ({float(rows[0][value_column]):g}); "
             answer += "; ".join(f"{r['supplierID']}: {float(r[value_column]):g}" for r in rows) + "."
             return {"answer": answer, "components": [{"type": "ranking_table", "props": {"items": rows, "metric": value_column}}],
                     "tool_calls": ["get_suppliers"], "validated": True,
@@ -48,7 +65,7 @@ class ChatAgent:
             explanation = self.tools.explainer.explain(ids[0])
             drivers = explanation["contributions"][:3]
             detail = "; ".join(f"{d['factor'].removesuffix('_Score').replace('_', ' ')} contributes {d['points']:+.2f} points" for d in drivers)
-            return {"answer": f"{ids[0]} has Total Risk Index {explanation['total']:g} ({explanation['risk_band']}). Top peer-relative drivers: {detail}. Formula fit R²={explanation['r2']:.4f} ({explanation['mode']}).",
+            return {"answer": f"{ids[0]} has Total Risk Index {explanation['total']:g} ({explanation['risk_band']}). Estimated peer-relative drivers (fitted model; original formula is not supplied): {detail}. Formula fit R²={explanation['r2']:.4f} ({explanation['mode']}).",
                     "components": [{"type": "contribution_bars", "props": explanation}],
                     "tool_calls": ["explain_score"], "validated": True, "provenance": explanation["provenance"]}
         if ids:

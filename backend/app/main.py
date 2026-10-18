@@ -299,7 +299,7 @@ def component_analysis(request: ComponentAnalysisRequest) -> dict:
 
 
 @app.post("/research")
-async def start_research(request: ResearchRequest) -> dict:
+def start_research(request: ResearchRequest) -> dict:
     try:
         report = app.state.research.run(request.company, request.supplier_id, component=request.component)
     except ValueError as error:

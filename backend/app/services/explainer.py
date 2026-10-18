@@ -19,7 +19,7 @@ class ScoreExplainer:
         residual = float(np.sum((y - predicted) ** 2))
         total = float(np.sum((y - y.mean()) ** 2))
         self.r2 = 1.0 - residual / total if total else 1.0
-        self.mode = "exact" if self.r2 >= 0.99 else "approximate"
+        self.mode = "fitted_surrogate"
         self.weights = {name: float(weight) for name, weight in zip(self.features, coefficients[1:])
                         if abs(float(weight)) > 1e-3}
 
