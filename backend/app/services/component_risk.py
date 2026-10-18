@@ -34,6 +34,14 @@ PROFILES = {
 
 def resolve_components(text: str) -> list[str]:
     normalized = re.sub(r"[-_]", " ", text.lower())
+    normalized = re.sub(r"\bsets?\s+of\s+breaks?\b", "brakes", normalized)
+    # Speech-to-text commonly turns "brake" into "break". Correct it only
+    # when the following noun makes the intended rail component unambiguous.
+    normalized = re.sub(r"\bbreak(s)?\s+(?=(?:wheel|pad|disc|shoe|system)s?\b)", r"brake\1 ", normalized)
+    # Brake wheels are part of the braking request; do not also classify them
+    # as generic wheelsets and create an avoidable ambiguity.
+    if re.search(r"\bbrake(s)?\s+wheel(s)?\b", normalized):
+        return ["braking"]
     return [key for key, (_, aliases, _, _) in PROFILES.items()
             if any(re.search(r"\b" + re.escape(alias) + r"\b", normalized) for alias in [key, *aliases])]
 
@@ -54,9 +62,10 @@ class ComponentRisk:
         key = matched[0]
         label, _, weights, checks = PROFILES[key]
         ids = list(dict.fromkeys(s.upper().strip() for s in ids))
-        if not ids or len(ids) > 20:
-            return {"status": "clarification_required", "message": "Select 1–20 supplier IDs or add companies from the dataset to your shortlist."}
-        rows = self.tools.get_suppliers(ids)
+        auto_screen = not ids
+        if len(ids) > 20:
+            return {"status": "clarification_required", "message": "Select at most 20 supplier IDs."}
+        rows = self.tools.get_all_suppliers() if auto_screen else self.tools.get_suppliers(ids)
         missing = sorted(set(ids) - {r["supplierID"] for r in rows})
         if missing:
             return {"status": "clarification_required", "message": "Some supplier IDs were not found; no partial ranking was produced.", "unknown_ids": missing}
@@ -83,12 +92,19 @@ class ComponentRisk:
                           "critical_factors": concerns, "missing_metrics": unavailable,
                           "decision": "Insufficient data" if unavailable else "Review critical factors" if concerns else "Continue component due diligence",
                           "required_checks": checks})
-        items.sort(key=lambda x: (x["component_score"] is None, x["component_score"] or 0, x["supplier_id"]))
-        for item in items:
-            item["rank"] = None if item["component_score"] is None else 1 + sum(
-                other["component_score"] is not None and other["component_score"] < item["component_score"] for other in items)
+        items.sort(key=lambda x: (x["component_score"] is None, x["component_score"] if x["component_score"] is not None else math.inf, x["supplier_id"]))
+        first_rank = {}
+        for index, item in enumerate(items, start=1):
+            if item["component_score"] is None:
+                item["rank"] = None
+            else:
+                item["rank"] = first_rank.setdefault(item["component_score"], index)
+        candidate_count = len(items)
+        if auto_screen:
+            items = items[:20]
         brief = decision_brief(items, weights)
         return {"decision_brief": brief, "status": "complete", "component": label, "component_id": key, "items": items,
+                "candidate_count": candidate_count,
                 "weights": weights, "model_version": "component-screening-v1",
                 "methodology": "Weighted sum of supplier-level risk scores. Lower is better. Illustrative application-defined weights, not Siemens-approved or component test results.",
                 "limitations": ["Component capability, certifications, price, capacity and supplier-to-part mappings are absent from the dataset.",
@@ -101,10 +117,11 @@ class ComponentRisk:
         if result["status"] != "complete":
             return {"answer": result["message"], "components": [], "validated": True, "status": result["status"],
                     "tool_calls": ["component_risk"], "component_analysis": result}
-        lines = [f"{result['component']} — component-priority supplier screening (lower is better)."]
+        lines = [f"{result['component']} — risk-ranked {len(result['items'])} of {result['candidate_count']} supplier records (lower is better)."]
         for item in result["items"]:
             factors = ", ".join(f"{f['column'].removesuffix('_Score').replace('_', ' ')} {f['score']:g}" for f in item["factors"][:2])
             lines.append(f"{item['company']} ({item['supplier_id']}): {item['component_score'] if item['component_score'] is not None else 'unavailable'}/100. {item['decision']}. Main weighted factors: {factors}.")
-        lines.append("Qualification is unverified for every company. These illustrative weights screen supplier-level data; they do not prove that a company supplies this part. Review the required checks in each card.")
+        lines.append("Qualification and component supply capability are unverified. The dataset has no part-to-supplier mapping, capacity, quote, or certification evidence; this is a risk-priority shortlist, not proof these companies supply the part. Review the required checks in each card.")
         return {"answer": "\n\n".join(lines), "components": [{"type": "component_risk", "props": result}],
-                "component_analysis": result, "validated": True, "tool_calls": ["get_suppliers", "component_risk"], "provenance": result["provenance"]}
+                "component_analysis": result, "supplier_ids": [item["supplier_id"] for item in result["items"]],
+                "validated": True, "tool_calls": ["get_suppliers", "component_risk"], "provenance": result["provenance"]}

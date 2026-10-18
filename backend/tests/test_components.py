@@ -38,8 +38,10 @@ def test_analysis_rejects_ambiguous_or_missing_inputs(component, ids):
 def test_chat_no_selection_and_selection_limit():
     with TestClient(app) as client:
         result=client.post('/chat',json={'message':'Find the best company for a traction motor'}).json()
-        assert result['component_analysis']['status'] == 'clarification_required'
-        assert result['components'] == []
+        assert result['component_analysis']['status'] == 'complete'
+        assert result['component_analysis']['candidate_count'] == 10000
+        assert len(result['component_analysis']['items']) == 20
+        assert len(result['supplier_ids']) == 20
         assert client.post('/components/analyze',json={'component':'doors','supplier_ids':['SUPP_00001']*21}).status_code == 422
         result=client.post('/components/analyze',json={'component':'doors','supplier_ids':['SUPP_00001']*2}).json()
         assert len(result['items']) == 1

@@ -9,6 +9,9 @@ from app.services.explainer import ScoreExplainer
 
 SORT_COLUMNS = {
     "total_risk": '"Total_Risk_Index"', "financial_health": '"Financial_Health_Score"',
+    "financial": '"Financial_Health_Score"', "credit": '"Credit_Rating_Score"',
+    "quality": '"Quality_Risk_Score"', "cyber": '"Digital_Security_Score"',
+    "compliance": '"Compliance_Risk_Score"', "safety": '"Safety_Incident_Score"',
     "po_volume_eur": '"Purchase Order Volume (EUR)"', "delivery_rating": '"Supplier Delivery Rating"',
     "supplier_name": '"Supplier Name"',
 }
@@ -23,6 +26,10 @@ class DataTools:
             return []
         marks = ",".join("?" for _ in ids)
         return self.data.query(f'SELECT * FROM suppliers WHERE "supplierID" IN ({marks})', ids)
+
+    def get_all_suppliers(self) -> list[dict[str, Any]]:
+        """Read the supplied snapshot for bounded, in-memory screening (10k rows)."""
+        return self.data.query('SELECT * FROM suppliers')
 
     def filter_suppliers(self, *, min_tri: float | None = None, max_tri: float | None = None,
                          risk_band: str | None = None, sourcing_risk_level: str | None = None,
@@ -44,7 +51,7 @@ class DataTools:
         sort_column = SORT_COLUMNS.get(sort_by, SORT_COLUMNS["total_risk"])
         direction = "ASC" if order.lower() == "asc" else "DESC"
         total = int(self.data.query(f"SELECT COUNT(*) AS n FROM suppliers{where}", params)[0]["n"])
-        rows = self.data.query(f"SELECT * FROM suppliers{where} ORDER BY {sort_column} {direction} LIMIT ? OFFSET ?",
+        rows = self.data.query(f'SELECT * FROM suppliers{where} ORDER BY {sort_column} {direction}, "supplierID" ASC LIMIT ? OFFSET ?',
                                [*params, max(1, min(limit, 100)), max(0, offset)])
         return {"items": rows, "total": total, "limit": max(1, min(limit, 100)), "offset": max(0, offset),
                 "provenance": {"dataset": self.data.csv_path.name}}

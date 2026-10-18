@@ -104,3 +104,52 @@ def test_company_name_must_not_be_only_instruction_words(client,company):
     with patch('app.agents.supervisor.agent.plan_request',return_value=Plan(actions=[Action(tool='research',company=company)])):
         d=client.post('/chat',json={'message':'Research this company financial conditions'}).json()
     assert d['status']=='clarification_required'
+
+def test_natural_language_top_twenty_routes_to_ranked_portfolio(client):
+    with patch('app.agents.supervisor.agent.plan_request',side_effect=AssertionError('Ranking should route deterministically')):
+        d=client.post('/chat',json={'message':'Get me the best or top 20 supplier list'}).json()
+    expected=sorted(ROWS,key=lambda sid:(float(ROWS[sid]['Total_Risk_Index']),sid))[:20]
+    assert d['tool_calls']==['filter']
+    assert d['supplier_ids']==expected
+    assert [row[0] for row in d['tables'][0]['rows']]==expected
+
+def test_top_financial_risk_suppliers_use_financial_metric(client):
+    with patch('app.agents.supervisor.agent.plan_request',side_effect=AssertionError('Metric ranking should route deterministically')):
+        d=client.post('/chat',json={'message':'Give me the top 10 suppliers with the lowest financial risk'}).json()
+    expected=sorted(ROWS,key=lambda sid:(float(ROWS[sid]['Financial_Health_Score']),sid))[:10]
+    assert d['tool_calls']==['filter']
+    assert d['supplier_ids']==expected
+    assert d['tables'][0]['columns']==['Supplier','Financial risk']
+
+@pytest.mark.parametrize('message',['I need 30 sets of breaks','Give me risk factors for all suppliers for brake pads'])
+def test_component_request_screens_all_data_and_returns_comparison_ready_ids(client,message):
+    with patch('app.agents.supervisor.agent.plan_request',side_effect=AssertionError('Component screening should route deterministically')):
+        d=client.post('/chat',json={'message':message}).json()
+    assert d['tool_calls']==['component']
+    assert d['component_analysis']['component_id']=='braking'
+    assert d['component_analysis']['candidate_count']==len(ROWS)
+    assert len(d['supplier_ids'])==20
+    assert d['supplier_ids']==[item['supplier_id'] for item in d['component_analysis']['items']]
+    weights=d['component_analysis']['weights']
+    expected=sorted(ROWS,key=lambda sid:(round(sum(float(ROWS[sid][column])*weight for column,weight in weights.items()),2),sid))[:20]
+    assert d['supplier_ids']==expected
+    assert 'not proof' in d['answer']
+
+def test_brake_wheels_resolves_only_to_braking(client):
+    with patch('app.agents.supervisor.agent.plan_request',side_effect=AssertionError('Unambiguous component must route directly')):
+        d=client.post('/chat',json={'message':'Compare the suppliers who supply brake wheels'}).json()
+    assert d['tool_calls']==['component']
+    assert d['component_analysis']['component_id']=='braking'
+
+def test_supplier_id_range_expands_and_returns_all_records(client):
+    with patch('app.agents.supervisor.agent.plan_request',side_effect=AssertionError('ID lookup should route deterministically')):
+        d=client.post('/chat',json={'message':'Check SUPP_00001 to SUPP_00020'}).json()
+    expected=[f'SUPP_{i:05d}' for i in range(1,21)]
+    assert d['tool_calls']==['profile']
+    assert d['supplier_ids']==expected
+    assert d['tables'][0]['columns'][1:]==expected
+
+def test_supplier_id_range_over_twenty_is_rejected(client):
+    d=client.post('/chat',json={'message':'Check SUPP_00001 to SUPP_00021'}).json()
+    assert d['status']=='clarification_required'
+    assert not d['tool_calls']
