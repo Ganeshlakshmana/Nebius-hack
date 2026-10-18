@@ -14,3 +14,7 @@ body{background:#000028;color:#edf5ff}.shell{background:radial-gradient(ellipse 
 .research-decision{border:1px solid #00bcb4;background:#071d32;padding:24px;border-radius:16px;margin-top:24px}.research-decision li{margin:14px 0}.research-decision a{color:#00e6dc}.research-evidence blockquote{border-left:3px solid #00bcb4;margin:16px 0;padding:12px;font-size:13px;opacity:.85}.research-evidence{scroll-margin-top:80px}
 
 .sourcing-workspace select,.sourcing-workspace input:not([type=checkbox]),.sourcing-workspace textarea{background:#101336;border:1px solid #45476a;border-radius:8px;padding:10px;color:white}.sourcing-wide{display:grid;gap:8px;margin:16px 0}.sourcing-workspace textarea{min-height:80px}.sourcing-workspace h3{margin-top:24px}.sourcing-workspace li{margin:10px 0}
+
+.selection-summary{padding:16px 22px;border-bottom:1px solid var(--border,#253441)}
+.selection-summary>div{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.selection-summary .prompt-chip{width:auto;margin:0;padding:7px 10px}
