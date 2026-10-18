@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 from contextlib import asynccontextmanager
 from typing import Any
@@ -27,6 +28,68 @@ from app.services.component_risk import ComponentRisk, catalog
 from app.models.schemas import ComponentAnalysisRequest
 
 
+COMPONENT_PROFILES = [
+    ("braking_system", "critical", {"quality": 0.40, "continuity": 0.35, "obsolescence": 0.10, "qualification": 0.15}),
+    ("traction_motor", "critical", {"quality": 0.30, "continuity": 0.35, "obsolescence": 0.20, "qualification": 0.15}),
+    ("bogie_wheelset", "critical", {"quality": 0.40, "continuity": 0.35, "obsolescence": 0.10, "qualification": 0.15}),
+    ("power_electronics", "high", {"quality": 0.25, "continuity": 0.25, "obsolescence": 0.35, "qualification": 0.15}),
+    ("signalling_control", "critical", {"quality": 0.25, "continuity": 0.25, "obsolescence": 0.25, "qualification": 0.25}),
+    ("doors_access", "high", {"quality": 0.35, "continuity": 0.30, "obsolescence": 0.15, "qualification": 0.20}),
+    ("hvac", "medium", {"quality": 0.25, "continuity": 0.35, "obsolescence": 0.20, "qualification": 0.20}),
+    ("communications", "high", {"quality": 0.15, "continuity": 0.25, "obsolescence": 0.40, "qualification": 0.20}),
+    ("sensors", "medium", {"quality": 0.30, "continuity": 0.20, "obsolescence": 0.35, "qualification": 0.15}),
+    ("interior_equipment", "low", {"quality": 0.35, "continuity": 0.25, "obsolescence": 0.15, "qualification": 0.25}),
+]
+
+
+def _build_simulated_component_dataset(data: SupplierStore) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]]]:
+    """Create a reproducible demo overlay; it is not a real supplier/BOM mapping."""
+    columns = ["supplierID", "Supplier Name", "Quality_Risk_Score", "Operational_Resilience_Score",
+               "Sub_Tier_Visibility_Score", "Labor_Stability_Score", "Digital_Security_Score",
+               "External_Intelligence_Score", "Compliance_Risk_Score"]
+    rows = data.query("SELECT " + ",".join(f'"{column}"' for column in columns) + " FROM suppliers ORDER BY \"supplierID\"")
+
+    def bounded(value: float) -> float:
+        return round(max(0.0, min(100.0, value)), 2)
+
+    records: list[dict[str, Any]] = []
+    by_supplier: dict[str, dict[str, Any]] = {}
+    for index, row in enumerate(rows):
+        supplier_id = str(row["supplierID"])
+        digest = hashlib.sha256(supplier_id.encode("utf-8")).digest()
+        category, criticality, weights = COMPONENT_PROFILES[int.from_bytes(digest[:4], "big") % len(COMPONENT_PROFILES)]
+
+        def variation(byte_index: int, amplitude: float) -> float:
+            return ((digest[byte_index] / 255.0) * 2.0 - 1.0) * amplitude
+
+        risk_factors = {
+            "quality": bounded(float(row["Quality_Risk_Score"]) + variation(4, 12)),
+            "continuity": bounded(0.55 * float(row["Operational_Resilience_Score"])
+                                  + 0.25 * float(row["Sub_Tier_Visibility_Score"])
+                                  + 0.20 * float(row["Labor_Stability_Score"]) + variation(5, 10)),
+            "obsolescence": bounded(0.60 * float(row["Digital_Security_Score"])
+                                    + 0.40 * float(row["External_Intelligence_Score"]) + variation(6, 15)),
+            "qualification": bounded(0.65 * float(row["Compliance_Risk_Score"])
+                                     + 0.35 * float(row["Quality_Risk_Score"]) + variation(7, 8)),
+        }
+        record = {
+            "supplier_id": supplier_id,
+            "supplier_name": row["Supplier Name"],
+            "component_id": f"SIM-CMP-{index + 1:05d}",
+            "component_category": category,
+            "criticality": criticality,
+            "risk_factors": risk_factors,
+            "risk_factor_weights": weights,
+            "component_risk_index": round(sum(risk_factors[name] * weights[name] for name in weights), 2),
+            "source": "simulated_component_dataset",
+            "mapping_status": "simulated_assignment",
+            "limitation": "Synthetic component assignment and scores; the source data has no BOM/component mapping.",
+        }
+        records.append(record)
+        by_supplier[supplier_id] = record
+    return records, by_supplier
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     data = SupplierStore(settings.dataset_path)
@@ -36,12 +99,15 @@ async def lifespan(app: FastAPI):
     search = SearchGateway(store)
     explainer = ScoreExplainer(data)
     tools = DataTools(data, store, explainer)
+    component_records, component_by_supplier = _build_simulated_component_dataset(data)
     app.state.data = data
     app.state.store = store
     app.state.events = events
     app.state.bus = bus
     app.state.search = search
     app.state.tools = tools
+    app.state.component_records = component_records
+    app.state.component_by_supplier = component_by_supplier
     app.state.chat = ChatAgent(tools)
     app.state.live_orders = LiveOrdersAgent(data, store)
     app.state.news = NewsAgent(store, search)
@@ -71,6 +137,8 @@ def health() -> dict:
             "formula_mode": app.state.tools.explainer.mode,
             "formula_r2": app.state.tools.explainer.r2,
             "feed_status": "running" if app.state.live_orders.running else "idle",
+            "component_risk_rows": len(app.state.component_records),
+            "component_risk_source": "simulated_component_dataset",
             "agents": ["chat", "live_orders", "news", "research", "scenarios", "memos"],
             "internal_agent_auth": "hmac-sha256"}
 
@@ -85,15 +153,40 @@ def schema() -> dict:
             "risk_bands": {"low": [0, 25], "medium": [25, 50], "high": [50, 75], "critical": [75, 100]}}
 
 
+@app.get("/components")
+def list_components(component_category: str | None = None,
+                    min_risk: float | None = Query(None, ge=0, le=100),
+                    max_risk: float | None = Query(None, ge=0, le=100),
+                    limit: int = Query(50, ge=1, le=100), offset: int = Query(0, ge=0)) -> dict:
+    records = app.state.component_records
+    if component_category:
+        records = [item for item in records if item["component_category"] == component_category]
+    if min_risk is not None:
+        records = [item for item in records if item["component_risk_index"] >= min_risk]
+    if max_risk is not None:
+        records = [item for item in records if item["component_risk_index"] <= max_risk]
+    records.sort(key=lambda item: item["component_risk_index"], reverse=True)
+    return {"items": records[offset:offset + limit], "total": len(records), "limit": limit, "offset": offset,
+            "source": "simulated_component_dataset",
+            "provenance": {"supplier_baseline_columns": ["Quality_Risk_Score", "Operational_Resilience_Score",
+                "Sub_Tier_Visibility_Score", "Labor_Stability_Score", "Digital_Security_Score",
+                "External_Intelligence_Score", "Compliance_Risk_Score"],
+                "notice": "Component assignments and component risk are synthetic overlays, not source-dataset facts."}}
+
+
 @app.get("/suppliers")
 def list_suppliers(min_tri: float | None = None, max_tri: float | None = None,
                    risk_band: str | None = None, sourcing_risk_level: str | None = None,
                    complexity: str | None = None, min_po: float | None = None, max_po: float | None = None,
                    sort_by: str = "total_risk", order: str = "desc",
                    limit: int = Query(50, ge=1, le=100), offset: int = Query(0, ge=0)) -> dict:
-    return app.state.tools.filter_suppliers(min_tri=min_tri, max_tri=max_tri, risk_band=risk_band,
+    result = app.state.tools.filter_suppliers(min_tri=min_tri, max_tri=max_tri, risk_band=risk_band,
         sourcing_risk_level=sourcing_risk_level, complexity=complexity, min_po=min_po, max_po=max_po,
         sort_by=sort_by, order=order, limit=limit, offset=offset)
+    for item in result["items"]:
+        item["component_risk"] = app.state.component_by_supplier.get(item["supplierID"])
+    result["component_risk_source"] = "simulated_component_dataset"
+    return result
 
 
 @app.get("/suppliers/{supplier_id}")
@@ -102,7 +195,16 @@ def supplier(supplier_id: str) -> dict:
     if not row:
         raise HTTPException(404, "Supplier not found")
     return {"profile": row, "operations": app.state.live_orders.status(supplier_id),
+            "component_risk": app.state.component_by_supplier.get(supplier_id),
             "provenance": {"dataset": app.state.data.csv_path.name}}
+
+
+@app.get("/suppliers/{supplier_id}/component-risk")
+def supplier_component_risk(supplier_id: str) -> dict:
+    component = app.state.component_by_supplier.get(supplier_id)
+    if component is None:
+        raise HTTPException(404, "Supplier not found")
+    return component
 
 
 @app.get("/suppliers/{supplier_id}/explain")
@@ -118,6 +220,9 @@ def compare(request: CompareRequest) -> dict:
     result = app.state.tools.compare(request.ids, request.custom_weights)
     if result.get("error"):
         raise HTTPException(422, result)
+    for profile in result["suppliers"]:
+        profile["component_risk"] = app.state.component_by_supplier.get(profile["supplierID"])
+    result["component_risk_source"] = "simulated_component_dataset"
     return result
 
 
