@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     const base = process.env.BACKEND_URL || "http://127.0.0.1:8000";
     const response = await fetch(`${base.replace(/\/$/, "")}/chat`, {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body:JSON.stringify(payload), signal:AbortSignal.timeout(20000),
+      body:JSON.stringify(payload), signal:AbortSignal.timeout(210000),
     });
     return Response.json(await response.json(), {status:response.status});
   } catch {

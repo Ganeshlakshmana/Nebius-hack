@@ -9,7 +9,7 @@
 - Shortlist Markdown export is implemented.
 
 ## Limits to demonstrate honestly
-- Chat is a deterministic router, not unrestricted LLM conversation. Research uses fixed search dimensions with rule-based and Nemotron incident candidates triggering follow-up.
+- Chat uses a Nemotron supervisor for conversation and bounded tool routing; data computations remain deterministic. Research uses fixed search dimensions with rule-based and Nemotron incident candidates triggering follow-up.
 - Potential-concern keywords are investigation triggers, not verified allegations. Company identity, contradictory evidence, legal applicability and component certification require buyer review.
 - Original total-risk formula is unknown. Explanations use a fitted statistical surrogate, never an exact original formula.
 - Synthetic component assignments and simulated operations are demo overlays, not supplier capability or live events.
@@ -61,3 +61,8 @@ Real-review API mode rejects synthetic quotes and unresolved qualification/contr
 Three n8n workflow templates and setup instructions are in integrations/n8n/. Cloud import, credentials, publication and schedule activation are pending. Templates have not been execution-tested in n8n. Browser visual QA remains pending.
 
 Commercial validation: 109 full-suite tests passed; the final commercial-only rerun passed 19 tests. TypeScript and production build passed. Frontend proxy smoke returned HTTP 200 with four feasible synthetic sets, a EUR 10,920 lowest-cost 60/40 allocation and contract deadline alerts; monitor retrieval returned HTTP 200. n8n JSON and graph references validated locally, not executed in Cloud.
+
+## Conversational supervisor
+Chat now handles greetings without triggering comparisons, carries the last 12 bounded messages, and uses Nemotron to select up to three allowlisted actions. Routes include compare, explain, portfolio filter, component screening, research, alternatives and draft memo. Sourcing/commercial routes ask for missing inputs and open the corresponding workspace; they do not silently create assumptions or run negotiations. Chat displays completed/failed agent traces, result tables, sources and memo downloads. Plans are validated before execution; unrequested IDs, anonymous company research, arbitrary tool names and excessive actions are rejected. General conversational responses are not evidence-validated. Provider failures use a labelled limited dataset fallback. No unrestricted code execution, supplier messaging, contract changes or purchasing.
+
+Supervisor verification: 125 backend tests, TypeScript and production build passed. Live frontend proxy checks passed for greeting with selected suppliers, financial comparison, a quality follow-up, memo generation and real-company research (14 source links). Model planning also produced a two-action comparison-plus-memo plan. These checks establish the tested routes, not unrestricted ChatGPT equivalence or universal intent accuracy. Browser visual QA remains pending.

@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
 from app.agents.chat.agent import ChatAgent
+from app.agents.supervisor.agent import SupervisorAgent
 from app.agents.live_orders.agent import LiveOrdersAgent
 from app.agents.memos.agent import MemoAgent
 from app.agents.news.agent import NewsAgent
@@ -118,6 +119,7 @@ async def lifespan(app: FastAPI):
     app.state.research = ResearchAgent(store, bus, search)
     app.state.scenarios = ScenarioAgent(tools)
     app.state.memos = MemoAgent(tools)
+    app.state.supervisor = SupervisorAgent(tools,app.state.chat,app.state.research,app.state.scenarios,app.state.memos)
     yield
     data.connection.close()
 
@@ -143,7 +145,7 @@ def health() -> dict:
             "feed_status": "running" if app.state.live_orders.running else "idle",
             "component_risk_rows": len(app.state.component_records),
             "component_risk_source": "simulated_component_dataset",
-            "agents": ["chat", "live_orders", "news", "research", "scenarios", "memos"],
+            "agents": ["supervisor", "chat", "live_orders", "news", "research", "scenarios", "memos"],
             "internal_agent_auth": "hmac-sha256"}
 
 
@@ -283,7 +285,7 @@ async def operations_scenario(request: ScenarioRequest, supplier_id: str | None 
 
 @app.post("/chat")
 def chat(request: ChatRequest) -> dict:
-    result = app.state.chat.answer(request.message, request.supplier_ids, request.component)
+    result = app.state.supervisor.answer(request.message, request.supplier_ids, request.component, [h.model_dump() for h in request.history])
     app.state.store.audit("chat", "chat_answer", {"tool_calls": result.get("tool_calls"), "validated": result.get("validated")})
     return result
 

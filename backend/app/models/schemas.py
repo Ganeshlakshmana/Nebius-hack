@@ -28,7 +28,13 @@ class ResearchRequest(BaseModel):
     component: str | None = Field(default=None, min_length=2, max_length=100)
 
 
+class ChatTurn(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=4000)
+
+
 class ChatRequest(BaseModel):
+    history: list[ChatTurn] = Field(default_factory=list, max_length=12)
     message: str = Field(min_length=1, max_length=2000)
     supplier_ids: list[str] = Field(default_factory=list, max_length=20)
     component: str | None = Field(default=None, min_length=2, max_length=100)

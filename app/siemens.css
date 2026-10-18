@@ -18,3 +18,5 @@ body{background:#000028;color:#edf5ff}.shell{background:radial-gradient(ellipse 
 .selection-summary{padding:16px 22px;border-bottom:1px solid var(--border,#253441)}
 .selection-summary>div{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
 .selection-summary .prompt-chip{width:auto;margin:0;padding:7px 10px}
+
+.chat-agent-trace{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}.chat-agent-trace span{font-size:11px;padding:5px 8px;background:#123239;border-radius:6px;color:#00e6c3}.chat-artifacts .table-scroll{margin:12px 0;max-height:320px}.chat-artifacts table{font-size:12px}.chat-artifacts td,.chat-artifacts th{padding:8px}.chat-message p{white-space:pre-wrap}.chat-artifacts a{color:#00e6c3}.chat-artifacts button{margin:8px 4px 0 0}
