@@ -91,3 +91,20 @@ def test_highest_comparison(client,monkeypatch):
     d=client.post('/chat',json={'message':'Highest financial risk','supplier_ids':['SUPP_00012','SUPP_00731']}).json()
     assert d['tables'][0]['rows'][0][0]=='SUPP_00012'
     assert d['answer'].startswith('Highest')
+
+@pytest.mark.parametrize('message',['SUPP_00002','SUPP_00002 here is the supplier if','supp_00002 here is the supplier id'])
+def test_supplied_identity_resolves_repeated_clarification(client,monkeypatch,message):
+    monkeypatch.setattr('app.agents.supervisor.agent.plan_request',lambda *a:pytest.fail('Identity lookup must not depend on model'))
+    d=client.post('/chat',json={'message':message,'history':[{'role':'user','content':'Research the top supplier financial conditions'},{'role':'assistant','content':'Please provide a supplier ID.'}]}).json()
+    assert d['tool_calls']==['profile']
+    assert 'Financial risk' in str(d['tables'])
+    assert 'real company name' in d['answer']
+
+def test_model_clarification_cannot_ignore_explicit_supplier(client,monkeypatch):
+    plan(monkeypatch,reply='Please provide a supplier ID.')
+    d=client.post('/chat',json={'message':'Financial details for SUPP_00002'}).json()
+    assert d['tool_calls']==['profile']
+
+def test_identity_lookup_rejects_nonexistent_id(client,monkeypatch):
+    d=client.post('/chat',json={'message':'SUPP_99999'}).json()
+    assert d['status']=='clarification_required' and not d['tool_calls']

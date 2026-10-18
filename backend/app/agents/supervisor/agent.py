@@ -9,7 +9,7 @@ from app.services.component_risk import resolve_components
 
 class Action(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    tool: Literal["compare","explain","filter","component","research","alternatives","memo","commercial","sourcing"]
+    tool: Literal["profile","compare","explain","filter","component","research","alternatives","memo","commercial","sourcing"]
     supplier_ids: list[str] = Field(default_factory=list,max_length=20)
     metric: Literal["total","financial","credit","quality","cyber","compliance","safety"] = "total"
     company: str = Field(default="",max_length=200)
@@ -31,6 +31,7 @@ For data facts use tools, never invent data in reply. When actions exist, reply 
 For conceptual questions you may explain procurement in plain language, labelled general guidance by the application.
 For missing details ask a specific question with no actions. Do not call tools for greetings.
 Available tools:
+profile: show supplied supplier risk and operational metrics; use when user supplies an ID in response to a clarification.
 compare: selected/explicit supplier_ids, one metric (total, financial, credit, quality, cyber, compliance, safety), order asc for lowest or desc for highest.
 explain: exactly one supplier ID, estimates original TRI contributors.
 filter: portfolio TRI min_risk/max_risk/order/limit; does not filter component capability.
@@ -73,7 +74,13 @@ class SupervisorAgent:
         selected=selected or [];history=history or []
         if re.fullmatch(r"\s*(hi|hello|hey|hello railwise|hi railwise|good morning|thanks|thank you)[!.\s]*",message,re.I):
             return basic("Hi! I can compare suppliers, explain risk, research a real company, find alternatives or help prepare a negotiation. What are you sourcing?",status="conversation",agent_trace=[{"agent":"Supervisor","status":"completed"}])
-        try:plan=plan_request(message,selected,component,history)
+        explicit_ids=list(dict.fromkeys(re.findall(r"SUPP_\d{5}",message.upper())))
+        # A supplier supplied in response to clarification is actionable even when
+        # the planner repeats its previous question or the model is unavailable.
+        remainder=re.sub(r"SUPP_\d{5}","",message,flags=re.I).strip()
+        identity_reply=bool(explicit_ids) and (not remainder or bool(re.fullmatch(
+            r"[\s,.:;!]*(?:here\s+is\s+)?(?:the\s+)?supplier\s*(?:id|if)?[\s,.:;!]*",remainder,re.I)))
+        try:plan=Plan(actions=[Action(tool="profile",supplier_ids=explicit_ids)]) if identity_reply else plan_request(message,selected,component,history)
         except Exception:
             plan=None
         if plan is None:
@@ -81,10 +88,12 @@ class SupervisorAgent:
                 result=self.chat.answer(message,selected,component)
                 return {**result,"agent_trace":[{"agent":"Dataset assistant","status":"completed"}],"supervisor_status":"model_unavailable"}
             return basic("The conversational model is unavailable right now. I can still compare supplier risk or explain a supplier ID. Please retry for research or a conversational follow-up.",status="unavailable",supervisor_status="model_unavailable")
+        if not plan.actions and explicit_ids and re.search(r"\b(risk|financial|profile|details|score|research)\b",message,re.I):
+            plan=Plan(actions=[Action(tool="profile",supplier_ids=explicit_ids)])
         if not plan.actions:
             # Conversational text is not presented as evidence-validated.
             return basic(plan.reply or "What company, supplier IDs or component would you like to investigate?",status="conversation",
-                         agent_trace=[{"agent":"Supervisor","status":"completed"}],supervisor_status="model_completed")
+                         agent_trace=[{"agent":"Supervisor","status":"responded · no tools run"}],supervisor_status="model_completed")
         context=message+"\n"+"\n".join(h["content"] for h in history if h["role"]=="user")
         allowed=set(selected)|set(re.findall(r"SUPP_\d{5}",(message+"\n"+"\n".join(h["content"] for h in history)).upper()))
         actions=plan.actions
@@ -92,7 +101,7 @@ class SupervisorAgent:
         if sum(a.tool=="research" for a in actions)>1:
             return basic("Please research one real company at a time.",status="clarification_required")
         for a in actions:
-            if a.tool in {"compare","explain","component","alternatives","memo"}:
+            if a.tool in {"profile","compare","explain","component","alternatives","memo"}:
                 if not a.supplier_ids:a.supplier_ids=list(dict.fromkeys(selected))
                 if not a.supplier_ids or set(a.supplier_ids)-allowed:
                     return basic("Which supplier IDs should I use? Select suppliers or include their IDs in your message.",status="clarification_required")
@@ -103,10 +112,10 @@ class SupervisorAgent:
                     return basic("Which single supplier should I investigate?",status="clarification_required")
             if a.tool=="research" and (len(a.company.strip())<2 or re.search(r"SUPP_\d{5}",a.company,re.I) or a.company.casefold() not in context.casefold()):
                 return basic("Please provide the real company name to research. Anonymous supplier IDs cannot establish company identity.",status="clarification_required")
-        result=basic("",status="completed",supervisor_status="model_completed")
+        result=basic("",status="completed",supervisor_status="deterministic_lookup" if identity_reply else "model_completed")
         answers=[]
         for a in actions:
-            name={"compare":"Dataset comparison","explain":"Risk explanation","filter":"Supplier search","component":"Component screening","research":"Research","alternatives":"Scenario alternatives","memo":"Memo","commercial":"Commercial preparation","sourcing":"Sourcing requirements"}[a.tool]
+            name={"profile":"Supplier record lookup","compare":"Dataset comparison","explain":"Risk explanation","filter":"Supplier search","component":"Component screening","research":"Research","alternatives":"Scenario alternatives","memo":"Memo","commercial":"Commercial preparation","sourcing":"Sourcing requirements"}[a.tool]
             try:
                 output=self.execute(a)
                 answers.append(output["answer"])
@@ -125,6 +134,15 @@ class SupervisorAgent:
         return result
 
     def execute(self,a):
+        if a.tool=="profile":
+            rows=self.tools.get_suppliers(a.supplier_ids)
+            fields=[("Total risk","Total_Risk_Index"),("Financial risk","Financial_Health_Score"),
+                    ("Credit risk","Credit_Rating_Score"),("Quality risk","Quality_Risk_Score"),
+                    ("Operational risk","Operational_Resilience_Score"),("Compliance risk","Compliance_Risk_Score"),
+                    ("Delivery rating (%)","Supplier Delivery Rating"),("Recorded PO value (EUR)","Purchase Order Volume (EUR)")]
+            return {"answer":"I found "+", ".join(a.supplier_ids)+" in the supplied dataset. Here are the recorded metrics. Risk scores use 0–100, lower is better; delivery rating is a performance percentage. These anonymized records do not identify a real company. Current financial statements or web research require its real company name. The dataset has no observation date, so these are not live financial conditions.",
+                    "tables":[{"title":"Supplied supplier record","columns":["Metric"]+a.supplier_ids,
+                               "rows":[[label]+[str(next(r for r in rows if r["supplierID"]==sid)[key]) for sid in a.supplier_ids] for label,key in fields]}]}
         if a.tool=="compare":
             columns={"total":"Total_Risk_Index","financial":"Financial_Health_Score","credit":"Credit_Rating_Score","quality":"Quality_Risk_Score","cyber":"Digital_Security_Score","compliance":"Compliance_Risk_Score","safety":"Safety_Incident_Score"}
             column=columns[a.metric]
