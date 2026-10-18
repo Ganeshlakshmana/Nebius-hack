@@ -1,6 +1,6 @@
 # Nebius demo deployment
 
-Runs the Vinext frontend, FastAPI backend, and Caddy HTTPS reverse proxy on one small CPU VM. The supplier CSV ships in the backend image; SQLite uses a persistent Docker volume. The backend has no public port. Caddy serves the dashboard publicly over HTTPS for judge access. Expensive chat and research routes have per-IP request limits in the frontend proxy.
+Runs the Vinext frontend, FastAPI backend, and Caddy HTTPS reverse proxy on one small CPU VM. The supplier CSV ships in the backend image; SQLite uses a persistent Docker volume. The backend has no public port. Caddy serves the dashboard publicly over HTTPS for judge access. Expensive chat and research routes have per-IP request limits in the frontend proxy. n8n Cloud reaches only the narrow, API-key-protected commercial proxy routes on the frontend; the backend port remains private.
 
 ## Host requirements
 
@@ -8,7 +8,7 @@ Ubuntu 24.04, Docker Engine + Compose plugin, 4 vCPU / 16 GiB RAM recommended fo
 
 ## Deploy
 
-1. Copy `.env` to `/opt/railwise/.env` over SSH with mode `600`. Include `PUBLIC_HOST`, `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`, `TAVILY_API_KEY`, `COMMERCIAL_API_KEY`, internal agent keys, and `OFFLINE_MODE=false`. Never commit this file.
+1. Copy `.env` to `/opt/railwise/.env` over SSH with mode `600`. Include `PUBLIC_HOST`, `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`, `TAVILY_API_KEY`, `COMMERCIAL_API_KEY`, internal agent keys, and `OFFLINE_MODE=false`. Set `N8N_COMMERCIAL_WEBHOOK` and `N8N_WEBHOOK_KEY` only after publishing the n8n webhook. Never commit this file.
 2. Place the repository at `/opt/railwise`.
 3. Run `sudo /opt/railwise/deploy/launch.sh`.
 4. Open `https://PUBLIC_HOST`; no sign-in is required for the hackathon demo.
@@ -17,3 +17,5 @@ Ubuntu 24.04, Docker Engine + Compose plugin, 4 vCPU / 16 GiB RAM recommended fo
 The Caddy container handles HTTPS automatically. A public DNS hostname pointing to the VM is required; `IP.nip.io` can be used for a temporary demo if certificate issuance succeeds. Persistent Caddy and SQLite volumes survive container restarts; preserve the VM disk for the demo.
 
 This passwordless public mode is intended only for the short hackathon judging window, not production. Chat is limited to 12 requests per IP per 10 minutes and research to 3 per IP per hour; these in-memory limits are best-effort on the single demo instance. Keep backend port 8000 private, rotate temporary provider credentials after the event, and stop/delete the VM when the demo is no longer needed.
+
+For n8n Cloud integration setup and manual verification order, follow [`integrations/n8n/README.md`](../integrations/n8n/README.md). Set `COMMERCIAL_API_KEY` on the backend and frontend containers to the same strong secret. The authenticated frontend proxy requires it and returns 503 while it is unset; do not configure the public n8n workflows until it is set.

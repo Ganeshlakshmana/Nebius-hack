@@ -32,17 +32,11 @@
       ],
       "parameters": {
         "method": "POST",
-        "url": "https://YOUR-RAILWISE-BACKEND/commercial/scan",
+        "url": "https://YOUR-RAILWISE-PUBLIC-HOST/api/internal/commercial/scan",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {
           "timeout": 60000
-        }
-      },
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "REPLACE_WITH_CREDENTIAL_ID",
-          "name": "Railwise backend header"
         }
       },
       "retryOnFail": true,

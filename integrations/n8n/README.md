@@ -1,54 +1,43 @@
-# Contract-aware negotiation workflows
+# Railwise negotiation preparation in n8n Cloud
 
-Status: importable templates prepared; NOT imported, activated or tested in n8n Cloud.
-The frontend Commercial screen and FastAPI calculation run locally without n8n.
+These workflows connect the Commercial workspace to Railwise's deterministic commercial optimizer and refresh saved contract alerts. They do not contact suppliers, send negotiation messages, interpret contract language, approve awards, or use an LLM to invent prices. Negotiation plans remain buyer-reviewed.
 
-## What runs where
+## Request path
 
-Dashboard → server-side /api/commercial → authenticated n8n webhook → authenticated FastAPI /commercial/evaluate → result back to dashboard.
+Dashboard → server-side `/api/commercial` → authenticated n8n webhook → authenticated Railwise `/api/internal/commercial/evaluate` → private FastAPI optimizer → result back to dashboard.
 
-n8n hosts orchestration, not the React frontend or Python optimizer. Keep the tested optimizer in FastAPI. It uses no model tokens.
-The daily schedule calls /commercial/scan; saved cases are recalculated and alerts stored for the dashboard's “Refresh monitored alerts” button.
+n8n Cloud cannot reach the backend's private Docker address. The two `/api/internal/commercial/*` frontend routes are narrow, authenticated proxies to the private backend. The backend's port 8000 stays private. The daily workflow calls the same authenticated proxy for `/commercial/scan`.
 
-## Configure after Cloud signup
+## Required values
 
-1. Deploy Railwise/FastAPI on a reachable HTTPS host. localhost on the Mac is not reachable from n8n Cloud.
-2. Set a random COMMERCIAL_API_KEY on both the backend and frontend server. Once configured, evaluation, alert reading and scan endpoints require X-Railwise-Key. Scan is disabled without it. Other app endpoints still need the planned deployment-wide jury authentication.
-3. Import railwise-commercial-webhook.json. Replace the placeholder backend URL in its HTTP Request node.
-4. Create two n8n Header Auth credentials, both with header name X-Railwise-Key, but different secret values:
-   - Backend credential: matches COMMERCIAL_API_KEY.
-   - Webhook credential: a separate random secret for dashboard-to-n8n calls.
-   Replace the placeholder credential references by selecting the corresponding saved credentials in each node.
-5. Test the webhook with synthetic data. It returns the backend HTTP status and JSON. Invalid input must remain an error, not a successful “workflow started” response.
-6. Publish the webhook workflow. Set N8N_COMMERCIAL_WEBHOOK to its production HTTPS URL and N8N_WEBHOOK_KEY to the webhook secret on the frontend server only. Restart the frontend.
-7. Import railwise-contract-monitor.json. Configure its backend URL and credential. It runs at 08:00 Europe/Berlin when activated; leave inactive until a successful manual execution.
-8. Import railwise-error-handler.json, then select it as the Error Workflow in both main workflow settings. It deliberately records a visible failed execution. It does not send email or Slack messages.
-9. Manually execute the monitor and confirm /commercial/alerts shows a fresh scanned_at. Break the backend credential in a test copy to verify visible failure and retries, then restore it. Only then activate the daily schedule.
+Use two independent random secrets (at least 32 characters each):
 
-## Behavior and limitations
+- `COMMERCIAL_API_KEY`: shared by the FastAPI backend, frontend proxy and n8n HTTP Request credentials.
+- `N8N_WEBHOOK_KEY`: shared by the frontend server and the n8n Webhook credential. Keep it separate from the backend key.
 
-- Alerts currently appear in the dashboard; no email, Slack or supplier contact is configured.
-- No contract document extraction. Contract terms and deadlines are manually entered.
-- The Commercial UI is explicitly synthetic simulation. The API additionally supports mode: review, which requires actual qualification evidence, non-demo offers and reviewed contract scope/constraints.
-- A single comparable quote per supplier; one currency and unit, integer demand, linear unit price, fixed fees, MOQ and capacity.
-- Up to three suppliers per set. Exhaustive subsets with cheapest feasible allocation under these assumptions; five cheapest options returned.
-- Quote validity is checked for an order placed today, not guaranteed through delivery.
-- “No agreement confirmed” differs from “unknown”. Existing agreements do not establish engineering qualification.
-- Notice dates are user-entered; the system does not infer legal deadlines from prose.
-- A case key groups component + application + supplier IDs + mode. Re-evaluation replaces that case's current snapshot.
-- Scans cover the 100 most recently updated cases. Repeated scans replace snapshots rather than generating duplicate notification rows. Last scan time remains visible; failed scans return 503.
-- Synthetic qualification is assumed only for scenario arithmetic. The actual gate status stays visible.
-- A modeled alternative is not an agreed price, guaranteed saving, verified capacity or procurement authorization.
-- Do not use public web search to infer private contractual relationships.
-- n8n execution records may contain commercial data. Configure access, execution retention and redaction before using real contracts.
+Keep both secrets in the server's private `.env`; never put them in browser JavaScript, workflow JSON, GitHub, or a screenshot. `N8N_COMMERCIAL_WEBHOOK` is the production webhook URL shown by n8n after publishing.
 
-## Negotiation preparation
+## Setup and activation
 
-Prepare objectives, non-negotiables, evidence, permitted concessions and a realistic fallback before approaching a supplier.
-Discuss total cost, delivery slots, payment timing, warranty, acceptance tests, changes and lifecycle support.
-A new supplier's lower price is not leverage unless its scope, capacity, qualification and transition obligations have been checked.
+1. Create the n8n Cloud workspace and open its editor. The marketing site is not a workspace; finish signup and apply the hackathon credit code in n8n's billing flow if prompted.
+2. Set `COMMERCIAL_API_KEY` and `N8N_WEBHOOK_KEY` in `/opt/railwise/.env` on the Railwise VM. Keep the existing `PUBLIC_HOST` and provider values. Do not paste either secret into chat.
+3. Import `railwise-commercial-webhook.json` into n8n. In **Dashboard request**, create/select a Header Auth credential named `Railwise dashboard → n8n`, header `X-Railwise-Key`, value `N8N_WEBHOOK_KEY`.
+4. In **Evaluate commercial scenario**, set the URL to `https://YOUR-RAILWISE-PUBLIC-HOST/api/internal/commercial/evaluate`. Create/select a different Header Auth credential named `Railwise n8n → API`, header `X-Railwise-Key`, value `COMMERCIAL_API_KEY`.
+5. Save, test with a synthetic case, then **Publish** the webhook workflow. Copy its Production URL (not the Test URL). Set that URL as `N8N_COMMERCIAL_WEBHOOK` in `/opt/railwise/.env`.
+6. Redeploy/restart Railwise so the frontend receives the three commercial variables. Then use the dashboard's Commercial workspace to run the same synthetic case and confirm a report returns. If a request fails, the UI must show an error; it must not claim success.
+7. Import `railwise-contract-monitor.json`. Use the same `Railwise n8n → API` credential and set its URL to `https://YOUR-RAILWISE-PUBLIC-HOST/api/internal/commercial/scan`. Run it manually once and confirm `status: completed`.
+8. Publish and activate the daily monitor only after the manual run succeeds. It is scheduled for 08:00 Europe/Berlin. Leave the error workflow inactive unless you have separately assigned it in each workflow's settings.
 
-References:
-- https://1prd-dxp.cips.org/intelligence-hub/negotiation
-- https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/
-- https://docs.n8n.io/flow-logic/error-handling/
+The exact workspace URL is needed to complete steps 3–5. No workspace has been connected to this project yet, so the templates are prepared but not imported, activated, or live.
+
+## Safe test case
+
+Use `mode: "simulation"`, two shortlisted supplier IDs, synthetic offers, a future delivery date, and clearly labelled `DEMO` quote references. The optimizer validates quote comparability, date/lead-time feasibility, capacity, minimum order, risk ceiling, and contract gates. It returns modeled allocations and buyer-entered contract alerts. A demo result is not a negotiated saving, verified supplier capability, legal conclusion, or award recommendation.
+
+## Limits and data handling
+
+- Alerts appear in the dashboard; email, Slack and supplier notifications are not configured.
+- Contract records and quote fields are synthetic or buyer-entered. No contract-document extraction is implemented.
+- Public search must not be used to infer private contractual relationships.
+- Only one comparable quote per supplier, one currency/unit, integer demand, linear unit prices, fixed fees, MOQ and capacity are modeled.
+- n8n execution history can contain quote and contract data. Restrict workspace access and retention before using non-demo commercial records.

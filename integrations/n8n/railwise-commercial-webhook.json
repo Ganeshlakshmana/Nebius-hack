@@ -17,13 +17,7 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "webhookId": "railwise-commercial",
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "REPLACE_WITH_WEBHOOK_CREDENTIAL_ID",
-          "name": "Railwise dashboard webhook"
-        }
-      }
+      "webhookId": "railwise-commercial"
     },
     {
       "id": "evaluate-commercial-scenario",
@@ -36,12 +30,12 @@
       ],
       "parameters": {
         "method": "POST",
-        "url": "https://YOUR-RAILWISE-BACKEND/commercial/evaluate",
+        "url": "https://YOUR-RAILWISE-PUBLIC-HOST/api/internal/commercial/evaluate",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "jsonBody": "={{ $json.body }}",
         "options": {
           "timeout": 20000,
           "response": {
@@ -52,12 +46,9 @@
           }
         }
       },
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "REPLACE_WITH_CREDENTIAL_ID",
-          "name": "Railwise backend header"
-        }
-      }
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1000
     },
     {
       "id": "return-result",

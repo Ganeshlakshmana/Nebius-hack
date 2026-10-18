@@ -24,6 +24,9 @@ services:
     restart: unless-stopped
     environment:
       BACKEND_URL: http://backend:8000
+      COMMERCIAL_API_KEY: ${COMMERCIAL_API_KEY:-}
+      N8N_COMMERCIAL_WEBHOOK: ${N8N_COMMERCIAL_WEBHOOK:-}
+      N8N_WEBHOOK_KEY: ${N8N_WEBHOOK_KEY:-}
     depends_on:
       backend:
         condition: service_healthy
