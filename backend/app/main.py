@@ -24,6 +24,8 @@ from app.services.data_tools import DataTools
 from app.services.events import AgentBus, EventBus
 from app.services.explainer import ScoreExplainer
 from app.services.search_gateway import SearchGateway
+from app.services.component_risk import ComponentRisk, catalog
+from app.models.schemas import ComponentAnalysisRequest
 
 
 COMPONENT_PROFILES = [
@@ -277,14 +279,28 @@ async def operations_scenario(request: ScenarioRequest, supplier_id: str | None 
 
 @app.post("/chat")
 def chat(request: ChatRequest) -> dict:
-    result = app.state.chat.answer(request.message, request.supplier_ids)
+    result = app.state.chat.answer(request.message, request.supplier_ids, request.component)
     app.state.store.audit("chat", "chat_answer", {"tool_calls": result.get("tool_calls"), "validated": result.get("validated")})
+    return result
+
+
+@app.get("/components")
+def components() -> dict:
+    return {"items": catalog(), "weights_source": "Illustrative application defaults; not Siemens-approved"}
+
+
+@app.post("/components/analyze")
+def component_analysis(request: ComponentAnalysisRequest) -> dict:
+    result = ComponentRisk(app.state.tools).analyze(request.component, request.supplier_ids)
+    if result["status"] != "complete":
+        raise HTTPException(422, result)
+    app.state.store.audit("chat", "component_analysis", {"component": result["component_id"], "supplier_ids": request.supplier_ids})
     return result
 
 
 @app.post("/research")
 async def start_research(request: ResearchRequest) -> dict:
-    report = app.state.research.run(request.company, request.supplier_id)
+    report = app.state.research.run(request.company, request.supplier_id, component=request.component)
     app.state.bus.send("research", "news", "research_started", {"research_id": report["research_id"], "company": request.company})
     return {"research_id": report["research_id"], "status": report["status"]}
 

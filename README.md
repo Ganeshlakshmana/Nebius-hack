@@ -32,12 +32,12 @@ The API loads `data/supplier_risk_dataset.csv` and permits the Vite frontend ori
 - Search, risk and delivery filters, numeric sorting and pagination.
 - Persistent local shortlist and comparison of up to 20 suppliers.
 - Supplier risk profiles and custom preference-weight scenarios.
-- Deterministic CSV quick answers and Markdown shortlist memo export.
+- Backend-connected chat with component-specific supplier risk cards and Markdown shortlist memo export.
 - Research brief and agent integration-status interfaces.
 
 ## Current limitations
 
-Tavily, general LLM chat, live orders and multi-agent execution are not connected. Research does not run external searches. The train is a conceptual illustration, not a Siemens CAD model or a supplier-to-component mapping. The supplied dataset has no component mapping, historical series or Total Risk Index weights. The original Total Risk Index is preserved.
+The FastAPI backend supports component-specific screening and optional Tavily searches. Frontend chat is connected; research UI and live-operations UI are not yet wired. General LLM chat is not implemented. The train is a conceptual illustration, not a Siemens CAD model or a supplier-to-component mapping. The supplied dataset has no component mapping, historical series or Total Risk Index weights. The original Total Risk Index is preserved.
 
 TypeScript validation passed for the redesign. Visual QA and deployment of the 3D redesign were not completed before this handoff.
 
@@ -55,6 +55,6 @@ All risk scores use 0 = no risk and 100 = maximum risk. Delivery and confirmatio
 
 ## Hosting
 
-The starter includes Sites/Cloudflare integration. `.openai/hosting.json` identifies the registered development Site, but this repository has not been deployed. Local execution uses the portable profile automatically. Keep credentials in ignored environment files; no API keys are needed for the current frontend.
+The starter includes Sites/Cloudflare integration. `.openai/hosting.json` identifies the registered development Site, but this repository has not been deployed. Local execution uses the portable profile automatically. Keep credentials in ignored environment files. Component chat requires FastAPI on port 8000; it does not require an LLM API key. See backend/README.md for both-server setup and component analysis examples.
 
 UI components retain their upstream source and license notices.

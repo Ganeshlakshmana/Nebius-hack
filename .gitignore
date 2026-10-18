@@ -64,3 +64,10 @@ next-env.d.ts
 /work/
 
 *.tsbuildinfo
+*.egg-info/
+
+# Graphify local cache and machine-specific state
+/graphify-out/cache/
+/graphify-out/.graphify_root
+/graphify-out/.graphify_analysis.json
+/graphify-out/.cloud-cta-shown
