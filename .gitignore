@@ -71,3 +71,6 @@ next-env.d.ts
 /graphify-out/.graphify_root
 /graphify-out/.graphify_analysis.json
 /graphify-out/.cloud-cta-shown
+
+# Temporary deployment credentials and SSH access key
+.deploy/

@@ -1,0 +1,14 @@
+.git
+.env
+.env.*
+!.env.example
+.deploy
+node_modules
+backend/.venv
+backend/**/__pycache__
+backend/**/*.pyc
+.wrangler
+.vinext
+.next
+dist
+build
