@@ -99,7 +99,7 @@ class ComponentRisk:
     def chat_answer(self, component: str, ids: list[str]) -> dict:
         result = self.analyze(component, ids)
         if result["status"] != "complete":
-            return {"answer": result["message"], "components": [], "validated": True,
+            return {"answer": result["message"], "components": [], "validated": True, "status": result["status"],
                     "tool_calls": ["component_risk"], "component_analysis": result}
         lines = [f"{result['component']} — component-priority supplier screening (lower is better)."]
         for item in result["items"]:

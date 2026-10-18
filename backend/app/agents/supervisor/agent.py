@@ -179,6 +179,7 @@ class SupervisorAgent:
                 for key in ("components","tables","sources"):result[key].extend(output.get(key,[]))
                 for key in ("component_analysis","memo_html","navigate_to","research_id"):
                     if key in output:result[key]=output[key]
+                if "provenance" in output:result["provenance"]=output["provenance"]
                 result["tool_calls"].append(record["tool"])
                 result["agent_trace"].append({"agent":name,"status":output.get("status","completed")})
                 if result["status"]!="partial" and output.get("status") in {"clarification_required","insufficient_evidence","unavailable"}:result["status"]=output["status"]
@@ -201,7 +202,12 @@ class SupervisorAgent:
         remainder=re.sub(r"SUPP_\d{5}","",message,flags=re.I).strip()
         identity_reply=bool(explicit_ids) and (not remainder or bool(re.fullmatch(
             r"[\s,.:;!]*(?:here\s+is\s+)?(?:the\s+)?supplier\s*(?:id|if)?[\s,.:;!]*",remainder,re.I)))
-        try:plan=Plan(actions=[Action(tool="profile",supplier_ids=explicit_ids)]) if identity_reply else plan_request(message,selected,component,history)
+        component_matches=resolve_components(component or message)
+        component_intent=bool(component) or bool(re.search(r"\b(find|best|supplier|company|vendor|source|select|screen|compare|risk|qualify)\b",message,re.I))
+        component_action=(Action(tool="component",supplier_ids=explicit_ids or selected,component=component_matches[0])
+                          if len(component_matches)==1 and component_intent else None)
+        try:plan=(Plan(actions=[Action(tool="profile",supplier_ids=explicit_ids)]) if identity_reply else
+                  Plan(actions=[component_action]) if component_action else plan_request(message,selected,component,history))
         except Exception:
             plan=None
         # Resolve an explicit metric follow-up from the most recent supplier context.
@@ -222,7 +228,7 @@ class SupervisorAgent:
                 repair=Action(tool="explain",supplier_ids=ids)
             elif factual and len(metrics)==1 and not resolve_components(message):
                 repair=Action(tool="compare",supplier_ids=ids,metric=metrics[0],order="desc" if re.search(r"\b(highest|worst|most)\b",message,re.I) else "asc")
-        repaired=False
+        repaired=bool(component_action)
         if repair and (plan is None or not plan.actions or all(a.tool=="profile" for a in plan.actions)):
             plan=Plan(actions=[repair]);repaired=True
         if plan is None:
@@ -261,6 +267,9 @@ class SupervisorAgent:
 
             if a.tool=="filter" and (a.metric!="total" or (a.min_risk is not None and a.max_risk is not None and a.min_risk>a.max_risk)):
                 return basic("Portfolio filters require total risk and a minimum no greater than the maximum. Please correct the range.",status="clarification_required")
+            if a.tool=="component" and not a.supplier_ids:
+                if not a.component:return basic("What component and supplier shortlist should I screen?",status="clarification_required")
+                continue
             if a.tool in {"profile","compare","explain","component","alternatives","memo"}:
                 if not a.supplier_ids:a.supplier_ids=list(dict.fromkeys(explicit_ids or selected or ids))
                 if not a.supplier_ids or set(a.supplier_ids)-allowed:
@@ -283,7 +292,8 @@ class SupervisorAgent:
                     ("Delivery rating (%)","Supplier Delivery Rating"),("Recorded PO value (EUR)","Purchase Order Volume (EUR)")]
             return {"answer":"I found "+", ".join(a.supplier_ids)+" in the supplied dataset. Here are the recorded metrics. Risk scores use 0–100, lower is better; delivery rating is a performance percentage. These anonymized records do not identify a real company. Current financial statements or web research require its real company name. The dataset has no observation date, so these are not live financial conditions.",
                     "tables":[{"title":"Supplied supplier record","columns":["Metric"]+a.supplier_ids,
-                               "rows":[[label]+[str(next(r for r in rows if r["supplierID"]==sid)[key]) for sid in a.supplier_ids] for label,key in fields]}]}
+                               "rows":[[label]+[str(next(r for r in rows if r["supplierID"]==sid)[key]) for sid in a.supplier_ids] for label,key in fields]}],
+                    "validated":True,"provenance":{"dataset":self.tools.data.csv_path.name,"supplier_ids":a.supplier_ids}}
         if a.tool=="compare":
             columns={"total":"Total_Risk_Index","financial":"Financial_Health_Score","credit":"Credit_Rating_Score","quality":"Quality_Risk_Score","cyber":"Digital_Security_Score","compliance":"Compliance_Risk_Score","safety":"Safety_Incident_Score"}
             column=columns[a.metric]
@@ -293,7 +303,8 @@ class SupervisorAgent:
             text=("Highest" if a.order=="desc" else "Lowest")+f" {a.metric} risk: "+", ".join(winners)+f" ({float(rows[0][column]):g}). "
             text+="; ".join(f"{r['supplierID']}: {float(r[column]):g}" for r in rows)+". Lower scores indicate lower risk."
             return {"answer":text,"components":[{"type":"ranking_table","props":{"items":rows,"metric":column}}],
-                    "tables":[{"title":"Dataset comparison","columns":["Supplier",column],"rows":[[r["supplierID"],str(r[column])] for r in rows]}]}
+                    "tables":[{"title":"Dataset comparison","columns":["Supplier",column],"rows":[[r["supplierID"],str(r[column])] for r in rows]}],
+                    "validated":True,"provenance":{"dataset":self.tools.data.csv_path.name,"metric":column,"supplier_ids":a.supplier_ids}}
         if a.tool=="explain":
             return self.chat.answer("Explain "+a.supplier_ids[0],a.supplier_ids)
         if a.tool=="component":
@@ -307,7 +318,8 @@ class SupervisorAgent:
                 return basic("The minimum risk must not exceed the maximum. Which range should I use?")
             d=self.tools.filter_suppliers(min_tri=a.min_risk,max_tri=a.max_risk,order=a.order,limit=a.limit)
             return {"answer":f"Found {d['total']} suppliers matching the total-risk constraints. Showing {len(d['items'])}; this does not establish component qualification.",
-                    "tables":[{"title":"Supplier results","columns":["Supplier","Total risk"],"rows":[[r["supplierID"],str(r["Total_Risk_Index"])] for r in d["items"]]}]}
+                    "tables":[{"title":"Supplier results","columns":["Supplier","Total risk"],"rows":[[r["supplierID"],str(r["Total_Risk_Index"])] for r in d["items"]]}],
+                    "validated":True,"provenance":{"dataset":self.tools.data.csv_path.name,"metric":"Total_Risk_Index"}}
         if a.tool=="research":
             d=self.research.run(a.company,component=a.component or None)
             findings=d.get("model_review",{}).get("findings",[])

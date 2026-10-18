@@ -26,6 +26,8 @@ def test_supervisor_comparison_uses_data(client,monkeypatch):
     d=client.post('/chat',json={'message':'Which is financially safer?','supplier_ids':['SUPP_00012','SUPP_00731']}).json()
     assert 'SUPP_00731 (53)' in d['answer']
     assert d['tables'][0]['rows'][0]==['SUPP_00731','53.0'] or d['tables'][0]['rows'][0]==['SUPP_00731','53']
+    assert d['validated'] is True
+    assert d['provenance']['dataset']=='supplier_risk_dataset.csv'
 
 def test_history_supports_followup(client,monkeypatch):
     plan(monkeypatch,actions=[Action(tool='explain',supplier_ids=['SUPP_00018'])])
@@ -85,6 +87,7 @@ def test_single_supplier_metric_not_replaced_by_total(client,monkeypatch):
     plan(monkeypatch,actions=[Action(tool='compare',metric='financial',supplier_ids=['SUPP_00012'])])
     d=client.post('/chat',json={'message':'Financial score for SUPP_00012'}).json()
     assert '54' in d['answer'] and d['tables'][0]['columns'][1]=='Financial_Health_Score'
+    assert d['validated'] is True
 
 def test_highest_comparison(client,monkeypatch):
     plan(monkeypatch,actions=[Action(tool='compare',metric='financial',order='desc')])
