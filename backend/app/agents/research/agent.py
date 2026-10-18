@@ -13,10 +13,13 @@ class ResearchAgent:
     def __init__(self, store: AppStore, bus: AgentBus, search: SearchGateway):
         self.store, self.bus, self.search = store, bus, search
 
-    def run(self, company: str, supplier_id: str | None = None, triggering_alert: str | None = None) -> dict:
+    def run(self, company: str, supplier_id: str | None = None, triggering_alert: str | None = None, component: str | None = None) -> dict:
         research_id = str(uuid.uuid4())
         dimensions = ["financial health and credit", "compliance and governance", "quality and safety",
                       "labor stability", "ESG", "digital security", "geopolitical and political exposure"]
+        if component:
+            dimensions = [f"{component} manufacturing capability product specifications", f"{component} quality recalls safety issues",
+                          f"{component} certification testing approvals", f"{component} capacity delivery lifecycle support", *dimensions[:2]]
         timeline, sources = [], []
         searches = 0
         for dimension in dimensions:
@@ -42,7 +45,10 @@ class ResearchAgent:
                   "scorecard": {}, "red_flags": [], "timeline": timeline, "recommendations": [],
                   "limitations": limitations, "sources": sources,
                   "budget_used": {"searches": searches, "extracts": 0, "deep_dive_rounds": 0},
+                  "component": component, "component_qualification": "unverified" if component else None,
                   "dataset_match": supplier_id, "triggering_alert": triggering_alert}
+        if component:
+            report["limitations"].append("Search results do not establish component qualification or link this real company to an anonymized supplier.")
         self.store.audit("research", "research_started", {"research_id": research_id, "company": company})
         self.store.audit("research", "research_completed", {"research_id": research_id, "status": report["status"]})
         with self.store.connect() as db:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from app.services.data_tools import DataTools
+from app.services.component_risk import ComponentRisk, resolve_components
 
 
 class ChatAgent:
@@ -9,11 +10,13 @@ class ChatAgent:
     def __init__(self, tools: DataTools):
         self.tools = tools
 
-    def answer(self, message: str, shortlist: list[str] | None = None) -> dict:
+    def answer(self, message: str, shortlist: list[str] | None = None, component: str | None = None) -> dict:
         ids = list(dict.fromkeys(re.findall(r"SUPP_\d{5}", message.upper())))
         if not ids:
             ids = list(dict.fromkeys(shortlist or []))
         lower = message.lower()
+        if component or resolve_components(message) or re.search(r"\b(component|part|parts)\b", lower):
+            return ComponentRisk(self.tools).chat_answer(component or message, ids)
         if len(ids) > 1:
             by = "financial_health" if "financial" in lower else "total_risk"
             rows = self.tools.get_suppliers(ids)

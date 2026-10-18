@@ -17,11 +17,18 @@ class WhatIfRequest(BaseModel):
 class ResearchRequest(BaseModel):
     company: str = Field(min_length=2, max_length=200)
     supplier_id: str | None = None
+    component: str | None = Field(default=None, min_length=2, max_length=100)
 
 
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=2000)
     supplier_ids: list[str] = Field(default_factory=list, max_length=20)
+    component: str | None = Field(default=None, min_length=2, max_length=100)
+
+
+class ComponentAnalysisRequest(BaseModel):
+    component: str = Field(min_length=2, max_length=100)
+    supplier_ids: list[str] = Field(min_length=1, max_length=20)
 
 
 class ScenarioRequest(BaseModel):
