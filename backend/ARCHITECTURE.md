@@ -1,10 +1,29 @@
 # Backend Architecture
 ## Supplier Risk Intelligence Platform – Siemens Challenge
 
-**Version:** 2.1
+**Version:** 2.2
 **Date:** 18 October 2026
 **Scope:** Backend design for a ~48-hour build, with a defined path to production
 **Dataset:** `supplier_risk_dataset.csv` (10,000 suppliers), described in `risk_criteria_description.md`
+
+> **Reading this document.** Sections 1–11 describe the target design. Section 0 records what the code in `backend/app/` actually implements today, and Section 12 covers agent governance: context, intent, guidelines, guardrails and evals. Where they differ, Section 0 and the per-agent docs in `backend/app/agents/` describe the running system.
+
+---
+
+## 0. Implementation Status (as of 18 October 2026)
+
+| Area | Target (this doc) | Implemented now |
+|------|-------------------|-----------------|
+| Chat agent | LLM tool loop + validator + UI component builder | Deterministic router over data tools (`agents/chat/agent.py`); no LLM call; returns `ranking_table`, `contribution_bars`, `supplier_card`, `component_risk` components with `tool_calls` and `provenance`. JSON response, not SSE |
+| Component screening | — (added after v2.1) | `services/component_risk.py`: 7 component profiles (braking, traction, wheelsets, signalling, doors, HVAC, batteries) with illustrative weights; `GET /components`, `POST /components/analyze`; every result `qualification_status: unverified` |
+| Live Orders agent | Continuous simulated feed, rolling windows, drift detection | One seeded demo scenario (delivery drop to 72% of baseline, `drift_z = -3.5`); overlay stored in SQLite; `source: simulated_feed` |
+| Research agent | LangGraph plan→search→extract→triage→deep-dive→synthesize→cite_check | Budgeted search across 7 dimensions (≤15 searches), source-linked timeline, no triage; reports are `status: partial` |
+| News signals | Classified by triage rubric | Search only when a real company name is supplied; all signals `unreviewed`, `dimension: unclassified` |
+| Scenarios | Peer-group alternatives with deltas | Nearest-profile alternatives (TRI gap + 10× relative PO gap), open-alert flag |
+| Memos | PDF with LLM summary | HTML download, all values escaped, data-only table |
+| Inter-agent bus | Hand-offs, events | HMAC-SHA256 signed `AgentBus`, audit log, SSE `EventBus` |
+| Frontend integration | — | Next.js `app/api/chat/route.ts` proxies `POST /chat` to `BACKEND_URL` (default `http://127.0.0.1:8000`); supplier table loads from static `public/suppliers.json`, not `/suppliers` |
+| Tests | Golden questions, calibration, drift | 9 test functions in `tests/test_api.py` and `tests/test_components.py` (10 cases with parametrisation) |
 
 ---
 
@@ -366,14 +385,16 @@ The LLM writes only the summary paragraph; all tables come directly from the dat
 | GET | `/operations/alerts` | Active and recent alerts |
 | GET | `/operations/stream` | SSE: ops ticker events and alerts |
 | POST | `/operations/scenario` | Start, pause or reset a seeded demo scenario |
-| POST | `/chat` | SSE stream: events, answer text, UI components, validator status |
+| POST | `/chat` | Target: SSE stream. **Now:** JSON `{answer, components, tool_calls, validated, provenance}` |
+| GET | `/components` | Component profile catalogue with illustrative weights and required checks |
+| POST | `/components/analyze` | Component-priority screening for 1–20 suppliers (422 on ambiguous component or unknown ID) |
 | POST | `/research` | `{research_id}`; starts the run in the background |
 | GET | `/research/{id}/events` | SSE stream of agent steps |
 | GET | `/research/{id}` | `ResearchReport` (final or partial) |
 | GET | `/events/stream` | SSE: all agent activity and hand-offs, for the activity panel |
 | GET | `/signals/{id}` | News signals for a supplier |
 | POST | `/scenarios/what-if` | Ranked alternatives |
-| POST | `/memos/shortlist` | PDF file |
+| POST | `/memos/shortlist` | Target: PDF. **Now:** HTML attachment |
 
 Every response with derived claims includes `provenance`: dataset columns used, tool calls made, feed source, or URLs.
 
@@ -443,6 +464,30 @@ class ChatResponse(BaseModel):
 
 ## 8. Project Structure
 
+**Current layout** (repo root = `fullstack/`):
+
+```
+backend/
+├── ARCHITECTURE.md, README.md, pyproject.toml
+├── app/
+│   ├── main.py                  # FastAPI app, all routes, agent wiring in lifespan()
+│   ├── config/                  # settings.py, columns.yaml
+│   ├── agents/
+│   │   ├── README.md            # index of agent docs
+│   │   ├── SHARED_GUARDRAILS.md # rules for every agent
+│   │   └── <agent>/             # chat, live_orders, news, research, scenarios, memos
+│   │       ├── agent.py
+│   │       └── CONTEXT.md, INTENT.md, GUIDELINES.md, GUARDRAILS.md, EVALS.md
+│   ├── services/                # data_tools, explainer, component_risk, events, search_gateway, security
+│   ├── models/schemas.py        # Pydantic request/response models
+│   ├── db/                      # duckdb_store.py (read-only dataset), sqlite_store.py (overlays, audit)
+│   └── data/app.sqlite3         # runtime state (git-ignored)
+└── tests/                       # test_api.py, test_components.py
+data/supplier_risk_dataset.csv   # immutable source dataset
+```
+
+**Target layout:**
+
 ```
 supplier-risk-intelligence/
 ├── backend/
@@ -492,6 +537,23 @@ supplier-risk-intelligence/
 
 ## 10. Testing
 
+**Implemented** (`python -m pytest backend/tests -q`, all passing on 18 Oct 2026):
+
+| Test | What it proves |
+|------|----------------|
+| `test_core_api_and_dataset_grounding` | 10,000 rows loaded; list, profile, explain (total = dataset TRI), compare and chat paths work |
+| `test_simulated_ops_and_agent_handoffs` | Demo scenario returns `simulated_feed`, creates an alert, triggers partial research and alternatives |
+| `test_compare_rejects_more_than_twenty` | 21 IDs → 422 |
+| `test_component_ranking_and_chat` | Weights sum to 1; scores reproducible and sorted; chat routes to component screening; `unverified` status |
+| `test_analysis_rejects_ambiguous_or_missing_inputs` | Unknown part, two parts, unknown supplier → 422 |
+| `test_chat_no_selection_and_selection_limit` | No suppliers → clarification; 21 IDs rejected; duplicates collapsed |
+| `test_missing_values_and_ties` | Missing metric → no score, no rank; ties share a rank |
+| `test_component_research_queries` | Component research adds component-specific queries and stays `unverified` |
+
+Per-agent eval plans and targets are in `backend/app/agents/<agent>/EVALS.md`. Known gaps: no direct tests for news signals or memos yet.
+
+**Target:**
+
 | Test | What it proves |
 |------|----------------|
 | `test_data_tools` | Filters, ranking and the 20-supplier cap behave correctly |
@@ -518,3 +580,44 @@ supplier-risk-intelligence/
 | Rubric-based signal severity | Calibrated against historical supplier incidents |
 | structlog + SQLite audit | OpenTelemetry + LangSmith, append-only audit store |
 | Live-adjusted score as overlay | Human-approved score updates with versioning |
+
+---
+
+## 12. Agent Governance: Context, Intent, Guidelines, Guardrails, Evals
+
+Every agent folder in `backend/app/agents/` carries five documents next to its code, so behaviour rules change in the same pull request as the code they govern:
+
+| File | Answers |
+|------|---------|
+| `CONTEXT.md` | Which endpoints call it, which data it reads, how it hands off |
+| `INTENT.md` | Why it exists and what "good" looks like |
+| `GUIDELINES.md` | How it must behave (and how maintainers must change it) |
+| `GUARDRAILS.md` | Hard limits, each marked **Implemented** or **Planned** |
+| `EVALS.md` | Existing tests, planned evals, numeric targets |
+
+Cross-agent rules are in `backend/app/agents/SHARED_GUARDRAILS.md`; the index is `backend/app/agents/README.md`.
+
+### 12.1 Shared guardrails (summary)
+
+| Control | Status |
+|---------|--------|
+| Dataset read-only; overlays in SQLite | Implemented |
+| `simulated_feed` / `unverified` / `unreviewed` labels on non-dataset output | Implemented |
+| No fabrication: missing providers return a status and `limitations` | Implemented |
+| HMAC-SHA256 signed, audited inter-agent envelopes | Implemented |
+| Parameterised SQL, allow-listed sort columns, Pydantic request bounds | Implemented |
+| Secrets only from environment; `.env` git-ignored | Implemented |
+| Offline-by-default search with cache, timeout and budget | Implemented |
+| Numeric answer validator for LLM-phrased chat | Planned |
+| Prompt-injection isolation for external text | Planned (with LLM step) |
+| User authentication and rate limiting on the public API | **Gap**: required before any non-local deployment |
+| Memo rejects unknown IDs; validated memo body schema | Planned |
+
+### 12.2 Eval strategy
+
+1. **Unit/contract tests** (exist): grounding, bounds, labels, rejection of ambiguous input.
+2. **Golden set** (planned): ≥30 chat questions with expected tool calls and numbers computed from DuckDB, run in CI; target ≥95% tool-call accuracy and 100% numeric faithfulness.
+3. **Safety sets** (planned): refusal cases (facts not in data), injection cases (instructions in supplier names or snippets), XSS cases for memos.
+4. **Research/news quality** (planned, once triage exists): labelled snippets and reference companies; citation validity 100%, red-flag recall ≥80%.
+
+A change to an agent is complete only when its `GUARDRAILS.md` and `EVALS.md` reflect the change.

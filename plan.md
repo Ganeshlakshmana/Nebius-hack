@@ -1,9 +1,9 @@
 # Supplier Risk Intelligence Platform  
 ## Multi-Agent System for Siemens – Long-Term Architecture & Implementation Plan
 
-**Version:** 1.0  
+**Version:** 1.1 (status and agent governance updated 18 October 2026)  
 **Date:** 18 October 2026  
-**Status:** Ready for Implementation  
+**Status:** In implementation (Phases 0–1 built)  
 **Target:** Siemens Supplier Risk Intelligence Challenge (Rolling Stock Components)
 
 ---
@@ -110,6 +110,25 @@ Build a production-grade, multi-agent Supplier Risk Intelligence system that:
 | **Chat / Answer Agent** | User question + selected suppliers | RAG over supplier profiles + agent outputs; generate explanations, comparisons, dynamic UI instructions | Natural answer + optional UI payload |
 | **Supervisor** | User intent | Route to correct agents, manage parallel execution, merge results, decide when human review is needed | Coordinated final state |
 
+#### 4.1 Agents as built (18 October 2026)
+
+The running backend (`backend/app/agents/`) differs from the table above. There is no Supervisor; `main.py` wires hand-offs directly over a signed `AgentBus`.
+
+| Agent | Code | State | Key limitation |
+|-------|------|-------|----------------|
+| Chat | `agents/chat/` | Deterministic, grounded router over data tools + component screening | No LLM phrasing or validator yet |
+| Live Orders | `agents/live_orders/` | One seeded simulated scenario, `simulated_feed` label | No continuous feed, no alert dedupe |
+| News | `agents/news/` | Source-linked search when a real company name is given | No triage; all signals `unreviewed` |
+| Research | `agents/research/` | Budgeted (≤15) multi-dimension search, component-aware | No extract/triage/synthesis; `status: partial` |
+| Scenarios | `agents/scenarios/` | Nearest-profile alternatives with open-alert flag | No component filter |
+| Memos | `agents/memos/` | Escaped HTML shortlist memo | Not PDF; unknown IDs silently dropped |
+
+The "Historical Scoring Agent" role is covered by services (`services/explainer.py` recovers TRI weights, R² ≈ 0.998; `services/data_tools.py`), not a separate agent.
+
+#### 4.2 Agent documentation (context, intent, guidelines, guardrails, evals)
+
+Each agent folder holds `CONTEXT.md`, `INTENT.md`, `GUIDELINES.md`, `GUARDRAILS.md` and `EVALS.md`. Cross-agent rules are in `backend/app/agents/SHARED_GUARDRAILS.md`, and the index is `backend/app/agents/README.md`. Section 12 of `backend/ARCHITECTURE.md` summarises them. These files are part of the definition of done for any agent change.
+
 ---
 
 ### 5. Technology Stack (2026 Best Practices)
@@ -119,7 +138,7 @@ Build a production-grade, multi-agent Supplier Risk Intelligence system that:
 | Orchestration | **LangGraph** (1.x) | Stateful, checkpointable, production-proven, excellent observability |
 | LLM Interface | LangChain + LiteLLM / native providers | Model-agnostic (OpenAI, Anthropic, xAI, local) |
 | Search & Research | **Tavily** (Search + Extract + Research APIs) | Purpose-built for agents, high-quality results, source attribution |
-| Frontend (MVP) | Streamlit + Plotly | Fastest path to polished interactive UI |
+| Frontend (MVP) | ~~Streamlit + Plotly~~ **Built with Next.js + shadcn/ui** (`app/`, `components/`) | Skipped the Streamlit step; chat proxied via `app/api/chat/route.ts` |
 | Frontend (Production) | Next.js 15 + React + Tailwind + shadcn/ui | Long-term maintainable, beautiful, SEO-ready if needed |
 | Backend API | FastAPI | High performance, automatic OpenAPI, easy auth |
 | Primary Store | DuckDB (local) → PostgreSQL + pgvector | Analytics-friendly, easy migration path |
@@ -178,6 +197,16 @@ Build a production-grade, multi-agent Supplier Risk Intelligence system that:
 - Dockerization + basic tests
 - Documentation & demo script
 
+**Progress as of 18 October 2026**
+
+| Phase | Status |
+|-------|--------|
+| 0 – Foundation | Done: dataset loaded read-only in DuckDB, TRI weights recovered, Next.js table + filters |
+| 1 – Core agents & comparison | Mostly done: compare (≤20), explanations, grounded chat, component screening, simulated ops. News triage not done |
+| 2 – Research & wow features | Partial: research search + scenario alternatives + HTML memo + SSE event stream. No deep-dive loop, no PDF, no LLM |
+| 3 – Hardening | Partial: audit log, FastAPI, 10 passing tests, agent guardrail/eval docs. No LangSmith, Docker or CI |
+| 4 – Production | Not started |
+
 **Phase 4 – Production Path (Post-Challenge)**
 - Migrate frontend to Next.js
 - PostgreSQL + proper auth
@@ -194,7 +223,8 @@ Build a production-grade, multi-agent Supplier Risk Intelligence system that:
 - **Observability First**: Every agent run produces structured traces
 - **Data Versioning**: Historic scores are immutable; new scores create new versions
 - **Human Oversight**: Critical score changes or research reports can require approval
-- **Testing Strategy**: Unit tests for scoring logic, integration tests for agent graphs, evaluation datasets for chatbot & research quality
+- **Testing Strategy**: Unit tests for scoring logic, integration tests for agent graphs, evaluation datasets for chatbot & research quality. Per-agent eval plans and targets are in each agent's `EVALS.md`
+- **Guardrails**: Every agent documents its hard limits in `GUARDRAILS.md`, marked Implemented or Planned. Open gaps are user authentication, rate limiting, the chat numeric validator, prompt-injection isolation and memo ID validation
 - **Security & Compliance**: No PII in logs, API key management via secrets, audit trail for all decisions
 - **Extensibility Points**:
   - New risk dimensions → just extend the scoring module
@@ -217,14 +247,12 @@ Build a production-grade, multi-agent Supplier Risk Intelligence system that:
 
 ### 10. Immediate Next Steps
 
-1. Confirm Tavily API key availability (or proceed with robust mock mode)
-2. Choose primary LLM provider for the demo
-3. Initialize the repository with the architecture above
-4. Begin Phase 0: data loading + Historical Scoring Agent + basic Streamlit UI
+Phases 0–1 are built (see progress table in Section 7). Next, in priority order:
 
----
-
-**This plan delivers a solution that not only wins the challenge but becomes a solid foundation for a real Siemens internal tool.**
-
-Ready to start implementation on your command.  
-Just say **“Build Phase 0”** or **“Start full system”** and we begin.
+1. Merge or retire the `dev` branch. It conflicts with `main` in `app/page.tsx` and defines a second `GET /components` route
+2. Choose the LLM provider; add LLM phrasing to the Chat agent behind the numeric validator (chat `GUARDRAILS.md`)
+3. Build the 30-question golden eval set and run it in CI (chat `EVALS.md`)
+4. Add news/research triage with corroboration rules for red flags
+5. Fix memo ID validation and add memo/news tests (the two agents with no direct tests)
+6. Wire the frontend supplier table to `GET /suppliers` instead of static `public/suppliers.json`
+7. Add authentication and rate limiting before any non-local deployment
