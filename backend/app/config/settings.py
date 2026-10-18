@@ -27,6 +27,7 @@ class Settings:
     offline_mode = os.getenv("OFFLINE_MODE", "true").lower() in {"1", "true", "yes"}
     feed_speed_seconds = max(1, int(os.getenv("FEED_SPEED_SECONDS", "5")))
     tavily_api_key = os.getenv("TAVILY_API_KEY", "")
+    commercial_api_key = os.getenv("COMMERCIAL_API_KEY", "")
     llm_api_key = os.getenv("LLM_API_KEY", "")
     llm_base_url = os.getenv("LLM_BASE_URL", "https://api.tokenfactory.nebius.com/v1")
     llm_model = os.getenv("LLM_MODEL", "")

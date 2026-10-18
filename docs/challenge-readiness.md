@@ -52,3 +52,12 @@ One bounded Token Factory call reviews up to eight initial source excerpts. Nemo
 90 offline backend tests passed, including citation fabrication, quote fabrication, duplicate citations, identity upgrading and provider failure. TypeScript and production build passed. Live synthetic policy-versus-incident smoke passed; these tests do not prove general semantic accuracy.
 
 End-to-end live smoke through `/api/research`: Knorr-Bremse / braking systems returned HTTP 200, 17 sources, model status completed and one quote-validated finding from eight supplied excerpts. Decision remained review_required. Report ID: f44c1838-1731-4d7d-97ae-bb90f39d15e8 (local database only).
+
+## Commercial scenario and contract monitoring
+The Commercial workspace generates editable, explicitly synthetic quotes and contract metadata for the shortlist. It compares up to three-supplier sets under price, fixed cost, MOQ, capacity, delivery, concentration and risk constraints. It reports quote exclusions, contract notice/expiry/coverage alerts, and whether a hypothetical fallback set exists for each candidate. No savings or real contractual relationship is inferred from the original CSV.
+
+Real-review API mode rejects synthetic quotes and unresolved qualification/contract checks. The dashboard currently exposes synthetic mode only. Reports can be exported as JSON with assumptions. Saved case snapshots support an authenticated monitoring scan and dashboard alert retrieval.
+
+Three n8n workflow templates and setup instructions are in integrations/n8n/. Cloud import, credentials, publication and schedule activation are pending. Templates have not been execution-tested in n8n. Browser visual QA remains pending.
+
+Commercial validation: 109 full-suite tests passed; the final commercial-only rerun passed 19 tests. TypeScript and production build passed. Frontend proxy smoke returned HTTP 200 with four feasible synthetic sets, a EUR 10,920 lowest-cost 60/40 allocation and contract deadline alerts; monitor retrieval returned HTTP 200. n8n JSON and graph references validated locally, not executed in Cloud.

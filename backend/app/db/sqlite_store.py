@@ -13,6 +13,10 @@ class AppStore:
         with self.connect() as db:
             db.executescript("""
                 PRAGMA journal_mode=WAL;
+                CREATE TABLE IF NOT EXISTS commercial_cases (
+                    case_id TEXT PRIMARY KEY, request TEXT NOT NULL, result TEXT NOT NULL,
+                    updated_at TEXT NOT NULL, scanned_at TEXT
+                );
                 CREATE TABLE IF NOT EXISTS audit_log (
                     id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                     actor TEXT NOT NULL, event_type TEXT NOT NULL, payload TEXT NOT NULL

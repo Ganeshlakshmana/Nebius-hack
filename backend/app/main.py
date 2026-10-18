@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import hmac
+from datetime import datetime, timezone
 import json
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
@@ -26,6 +28,7 @@ from app.services.explainer import ScoreExplainer
 from app.services.search_gateway import SearchGateway
 from app.services.component_risk import ComponentRisk, catalog
 from app.services.sourcing import SourcingRequest
+from app.services.commercial import CommercialRequest, analyze as analyze_commercial
 from app.models.schemas import ComponentAnalysisRequest
 
 
@@ -370,3 +373,58 @@ def sourcing_evaluate(request: SourcingRequest) -> dict:
         raise HTTPException(422, str(error)) from None
     app.state.store.audit('sourcing', 'decision_packet', result)
     return result
+
+
+@app.post("/commercial/evaluate")
+def commercial_evaluate(request: CommercialRequest, x_railwise_key: str = Header(default="")) -> dict:
+    commercial_auth(x_railwise_key)
+    try:
+        result = analyze_commercial(request, app.state.tools)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    body = request.model_dump(mode="json")
+    case_id = hashlib.sha256(json.dumps([request.sourcing.component, request.sourcing.application, sorted(request.sourcing.supplier_ids), request.mode]).encode()).hexdigest()[:20]
+    with app.state.store.connect() as db:
+        db.execute("INSERT INTO commercial_cases(case_id,request,result,updated_at) VALUES(?,?,?,?) ON CONFLICT(case_id) DO UPDATE SET request=excluded.request,result=excluded.result,updated_at=excluded.updated_at,scanned_at=NULL",
+                   (case_id, json.dumps(body), json.dumps(result), datetime.now(timezone.utc).isoformat()))
+    app.state.store.audit("commercial", "scenario_evaluated", {"case_id": case_id, "mode": request.mode})
+    return {**result, "case_id": case_id}
+
+
+def commercial_auth(token: str, required: bool = False):
+    if not settings.commercial_api_key:
+        if required:
+            raise HTTPException(status_code=503, detail="Configure COMMERCIAL_API_KEY before remote monitoring")
+        return
+    if not hmac.compare_digest(token, settings.commercial_api_key):
+        raise HTTPException(status_code=401, detail="Invalid commercial API credential")
+
+
+@app.post("/commercial/scan")
+def commercial_scan(x_railwise_key: str = Header(default="")) -> dict:
+    commercial_auth(x_railwise_key, required=True)
+    with app.state.store.connect() as db:
+        cases = db.execute("SELECT * FROM commercial_cases ORDER BY updated_at DESC LIMIT 100").fetchall()
+    failures=[];count=0
+    for case in cases:
+        try:
+            result=analyze_commercial(CommercialRequest.model_validate_json(case["request"]),app.state.tools)
+            with app.state.store.connect() as db:
+                db.execute("UPDATE commercial_cases SET result=?,scanned_at=? WHERE case_id=?",
+                           (json.dumps(result),datetime.now(timezone.utc).isoformat(),case["case_id"]))
+            count+=1
+        except Exception:
+            failures.append(case["case_id"])
+    app.state.store.audit("commercial", "monitor_scan", {"checked":count,"failed_case_ids":failures})
+    if failures:
+        raise HTTPException(status_code=503, detail={"checked":count,"failed_case_ids":failures})
+    return {"status":"completed","checked":count,"notifications":"dashboard_only","case_limit":100}
+
+
+@app.get("/commercial/alerts")
+def commercial_alerts(x_railwise_key: str = Header(default="")) -> dict:
+    commercial_auth(x_railwise_key)
+    with app.state.store.connect() as db:
+        cases=db.execute("SELECT case_id,result,scanned_at,updated_at FROM commercial_cases ORDER BY updated_at DESC LIMIT 100").fetchall()
+    return {"cases":[{"case_id":c["case_id"],"scanned_at":c["scanned_at"],"evaluated_at":c["updated_at"],
+                      "mode":json.loads(c["result"])["mode"],"alerts":json.loads(c["result"])["alerts"]} for c in cases]}
