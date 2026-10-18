@@ -1,0 +1,38 @@
+id: supplierID
+total_risk: Total_Risk_Index
+name: Supplier Name
+category_scores:
+  financial_health: Financial_Health_Score
+  credit_rating: Credit_Rating_Score
+  compliance: Compliance_Risk_Score
+  governance: Governance_Risk_Score
+  quality: Quality_Risk_Score
+  safety: Safety_Incident_Score
+  operational_resilience: Operational_Resilience_Score
+  labor_stability: Labor_Stability_Score
+  sub_tier_visibility: Sub_Tier_Visibility_Score
+  digital_security: Digital_Security_Score
+  environmental_exposure: Environmental_Exposure_Score
+  geopolitical: Geopolitical_Risk_Score
+  political_stability: Political_Stability_Score
+  esg_performance: ESG_Performance_Score
+  media_sentiment: Media_Sentiment_Score
+  market_sentiment: Market_Sentiment_Score
+  external_intelligence: External_Intelligence_Score
+context_scores:
+  industry_benchmark: Industry_Benchmark_Score
+operational_metrics:
+  po_volume_eur: Purchase Order Volume (EUR)
+  order_change_rate: Order Change Rate
+  delivery_rating: Supplier Delivery Rating
+  confirmation_rate: Order Confirmation Rate
+  sourcing_risk_level: Sourcing Risk Level
+  supply_chain_complexity: Supply Chain Complexity
+score_direction: higher_is_riskier
+risk_bands:
+  low: [0, 25]
+  medium: [25, 50]
+  high: [50, 75]
+  critical: [75, 100]
+peer_grouping: [sourcing_risk_level, supply_chain_complexity]
+peer_min_size: 30
