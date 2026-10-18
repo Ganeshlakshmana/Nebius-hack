@@ -36,3 +36,10 @@ Live smoke check: Knorr-Bremse / braking systems returned 19 sources, 7 searches
 
 ## Research evidence update
 Optional buyer-supplied official domain, conservative incident-vs-policy triage, freshness labels, citation-linked decision actions and decision-packet export now implemented. Domain matches are anchors, not legal-entity verification. No model-based semantic understanding or independent corroboration is claimed. External evidence remains unverified.
+
+## Any-component sourcing workspace
+Open Sourcing after shortlisting suppliers. Enter component, application/specification, quantity and delivery date. Edit requirements and mark which are mandatory. Record per-supplier evidence references, reviewer names, scope rationale and validity dates. User attestation is not independent document verification. No requirement can be cleared with demo evidence, missing review metadata or evidence expiring before delivery. Failed mandatory checks block readiness regardless of score. Completed checks lead only to authorized review, never automatic award. Submitted packets are recorded in the local SQLite audit log; draft entries are tab-local. Export before closing.
+
+Demo: shortlist the three challenge IDs, enter a custom component (for example a vibration isolator), and generate with missing evidence. Show that even the lowest-risk supplier has unresolved gates. Enter a failed requirement for one supplier and regenerate. Download the decision packet to preserve the brief, weights, risk scores, per-requirement status, evidence references and limitations. Demo evidence must be marked as such and cannot satisfy a real requirement.
+
+Evaluation total: 81 passing backend cases, including sourcing gate regressions. Token Factory inference remains pending valid credentials. Public deployment, authenticated reviewer identity and jury login remain outstanding.

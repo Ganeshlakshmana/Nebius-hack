@@ -25,6 +25,7 @@ from app.services.events import AgentBus, EventBus
 from app.services.explainer import ScoreExplainer
 from app.services.search_gateway import SearchGateway
 from app.services.component_risk import ComponentRisk, catalog
+from app.services.sourcing import SourcingRequest
 from app.models.schemas import ComponentAnalysisRequest
 
 
@@ -359,3 +360,13 @@ def research_events(research_id: str) -> StreamingResponse:
     async def event_generator():
         yield _sse({"agent": "research", "type": "report_available", "payload": {"research_id": research_id}})
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+@app.post('/sourcing/evaluate')
+def sourcing_evaluate(request: SourcingRequest) -> dict:
+    from app.services.sourcing import evaluate
+    try:
+        result = evaluate(request, app.state.tools)
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from None
+    app.state.store.audit('sourcing', 'decision_packet', result)
+    return result
