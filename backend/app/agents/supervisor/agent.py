@@ -22,6 +22,7 @@ class Action(BaseModel):
     supplier_ids: list[str] = Field(default_factory=list,max_length=20)
     metric: Literal["total","financial","credit","quality","cyber","compliance","safety"] = "total"
     company: str = Field(default="",max_length=200)
+    news_only: bool = False
     component: str = Field(default="",max_length=100)
     min_risk: float | None = Field(default=None,ge=0,le=100,allow_inf_nan=False)
     max_risk: float | None = Field(default=None,ge=0,le=100,allow_inf_nan=False)
@@ -45,7 +46,7 @@ compare: selected/explicit supplier_ids, one metric (total, financial, credit, q
 explain: exactly one supplier ID, estimates original TRI contributors.
 filter: portfolio TRI min_risk/max_risk/order/limit; does not filter component capability.
 component: component name and supplier_ids; illustrative screening only.
-research: real company name explicitly present in user messages, optional component. Never research an anonymized SUPP ID. At most one research action.
+research: real company name explicitly present in user messages, optional component. Set news_only=true for recent/latest news or headlines. Never research an anonymized SUPP ID. At most one research action.
 alternatives: exactly one supplier ID; risk-profile alternatives, not verified component substitutes.
 memo: supplier_ids; draft only, no award or sending.
 commercial: open negotiation workspace and show gaps; no fabricated prices, contracts or savings.
@@ -78,6 +79,19 @@ def extract_supplier_ids(message: str) -> tuple[list[str], bool]:
             ids.append(match.group(0).upper())
     ids = list(dict.fromkeys(ids))
     return ids, len(ids) > 20
+
+def extract_news_company(message: str) -> str | None:
+    match=re.search(r"\b(?:about|on|regarding|for|from)\s+(?:the\s+)?(.+)",message,re.I)
+    if not match:return None
+    candidate=match.group(1).strip()
+    candidate=re.split(r"\s+(?:or|and)\s+(?:the\s+|any\s+|a\s+)?(?:supplier|vendor|company|candidate)\b",candidate,flags=re.I)[0]
+    candidate=re.split(r"[,;?.!]",candidate)[0]
+    candidate=re.sub(r"\s+(?:for me|please)$","",candidate,flags=re.I).strip(" \t\"'")
+    candidate=re.sub(r"^(?:supplier|vendor|company)\s+","",candidate,flags=re.I)
+    candidate=re.sub(r"\s+(?:news|headlines|updates)$","",candidate,flags=re.I).strip()
+    generic={"supplier","vendor","company","manufacturer","them","it","this","that","my supplier","our supplier"}
+    if not candidate or candidate.casefold() in generic or re.fullmatch(r"SUPP_\d{5}",candidate,re.I):return None
+    return candidate[0].upper()+candidate[1:]
 
 def plan_request(message, selected, component, history):
     if settings.offline_mode or not settings.llm_api_key or not settings.llm_model:
@@ -219,6 +233,16 @@ class SupervisorAgent:
         explicit_ids, too_many_ids = extract_supplier_ids(message)
         if too_many_ids:
             return basic("Select at most 20 suppliers.",status="clarification_required")
+        news_intent=bool(re.search(r"\b(recent|latest|news|headlines?|press releases?|what happened)\b",message,re.I))
+        if news_intent:
+            news_company=extract_news_company(message)
+            if news_company:
+                return {"plan":Plan(actions=[Action(tool="research",company=news_company,news_only=True)]),
+                        "selected":selected,"ids":explicit_ids or selected,"explicit_ids":explicit_ids,
+                        "supervisor_status":"news_research_route"}
+            if explicit_ids:
+                return basic("An anonymized supplier ID cannot identify a real company for news research. Give me the supplier's real company name and I’ll search recent sources.",status="clarification_required")
+            return basic("Which real company should I search for recent news? An anonymized supplier ID does not identify a company.",status="clarification_required")
         # A supplier supplied in response to clarification is actionable even when
         # the planner repeats its previous question or the model is unavailable.
         remainder=_SUPPLIER_RANGE.sub(" ",message)
@@ -360,9 +384,20 @@ class SupervisorAgent:
                     "supplier_ids":[r["supplierID"] for r in d["items"]],"validated":True,
                     "provenance":{"dataset":self.tools.data.csv_path.name,"metric":column}}
         if a.tool=="research":
-            d=self.research.run(a.company,component=a.component or None)
+            d=self.research.run(a.company,component=a.component or None,news_only=a.news_only)
             findings=d.get("model_review",{}).get("findings",[])
-            text=d["executive_summary"]+"\n"+d["decision"]["summary"]
+            if a.news_only:
+                items=d.get("timeline",[])
+                text=f"Recent Tavily news for {a.company} (past month)."
+                for item in items[:5]:
+                    published=item.get("published") or "publication date unavailable"
+                    text+=f"\n\n- {published}: {(item.get('summary') or '').strip()[:360]}"
+                if not items:
+                    statuses=", ".join(dict.fromkeys(x.get("status","") for x in d.get("search_outcomes",[]) if x.get("status")))
+                    text+="\n\nNo date-filtered news articles were returned. This does not indicate low risk."
+                    if statuses:text+=f" Search status: {statuses}."
+            else:
+                text=d["executive_summary"]+"\n"+d["decision"]["summary"]
             if findings:text+="\n\nUnverified model interpretations:\n"+"\n".join(f'{f["evidence_id"]}: {f["interpretation"]}' for f in findings)
             text+="\n\n"+ "\n".join(d["limitations"])
             return {"answer":text,"research_id":d["research_id"],"sources":[{"label":s.get("evidence_id","Source")+" · "+s["dimension"],"url":s["url"]} for s in d["timeline"]],"navigate_to":"Research"}

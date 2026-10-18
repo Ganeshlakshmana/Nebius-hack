@@ -28,10 +28,11 @@ class SearchGateway:
         self.store = store
         self.last_status = "not_started"
 
-    def search(self, query: str, max_results: int = 5) -> list[dict]:
+    def search(self, query: str, max_results: int = 5, topic: str = "general",
+               time_range: str | None = None, filter_by_published_date: bool = False) -> list[dict]:
         self.last_status = "started"
         max_results = max(1, min(max_results, 10))
-        cache_key = hashlib.sha256(f"{max_results}:{query.strip().lower()}".encode()).hexdigest()
+        cache_key = hashlib.sha256(f"{max_results}:{topic}:{time_range}:{filter_by_published_date}:{query.strip().lower()}".encode()).hexdigest()
         with self.store.connect() as db:
             cached = db.execute("SELECT payload, created_at FROM search_cache WHERE cache_key=?", (cache_key,)).fetchone()
         if cached:
@@ -44,11 +45,14 @@ class SearchGateway:
         if settings.offline_mode or not settings.tavily_api_key:
             self.last_status = "offline" if settings.offline_mode else "provider_not_configured"
             return []
-        payload = json.dumps({"api_key": settings.tavily_api_key, "query": query,
-                              "search_depth": "basic", "max_results": max_results,
+        payload = json.dumps({"query": query, "search_depth": "basic", "max_results": max_results,
+                              "topic": topic, "time_range": time_range,
+                              "include_published_date": topic == "news",
+                              "filter_by_published_date": filter_by_published_date,
                               "include_answer": False}).encode()
         request = Request("https://api.tavily.com/search", data=payload,
-                          headers={"Content-Type": "application/json"}, method="POST")
+                          headers={"Content-Type": "application/json",
+                                   "Authorization": f"Bearer {settings.tavily_api_key}"}, method="POST")
         try:
             with urlopen(request, timeout=10) as response:
                 result = json.loads(response.read().decode())

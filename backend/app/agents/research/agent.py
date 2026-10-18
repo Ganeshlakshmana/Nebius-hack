@@ -16,16 +16,16 @@ class ResearchAgent:
     def __init__(self, store: AppStore, bus: AgentBus, search: SearchGateway):
         self.store, self.bus, self.search = store, bus, search
 
-    def run(self, company: str, supplier_id: str | None = None, triggering_alert: str | None = None, component: str | None = None, domain: str | None = None) -> dict:
+    def run(self, company: str, supplier_id: str | None = None, triggering_alert: str | None = None, component: str | None = None, domain: str | None = None, news_only: bool = False) -> dict:
         company = clean_search_term(company)
         component = clean_search_term(component, 100) if component else None
         if len(company) < 2:
             raise ValueError("Company name must contain at least 2 characters after cleaning")
         domain = official_domain(domain)
         research_id = str(uuid.uuid4())
-        dimensions = ["financial health and credit", "compliance and governance", "quality and safety",
+        dimensions = ["recent news (past month)"] if news_only else ["financial health and credit", "compliance and governance", "quality and safety",
                       "labor stability", "ESG", "digital security", "geopolitical and political exposure"]
-        if component:
+        if component and not news_only:
             dimensions = [f"{component} manufacturing capability product specifications", f"{component} quality recalls safety issues",
                           f"{component} certification testing approvals", f"{component} capacity delivery lifecycle support", *dimensions[:2]]
         if domain:
@@ -38,7 +38,10 @@ class ResearchAgent:
                 break
             self.bus.send("research", "news", "research_search_started",
                           {"research_id": research_id, "dimension": dimension})
-            results = [] if anonymous else self.search.search(f'"{company}" rail railway {dimension}', max_results=3)
+            query=f'"{company}" {dimension}' if news_only else f'"{company}" rail railway {dimension}'
+            results = [] if anonymous else self.search.search(query, max_results=5 if news_only else 3,
+                       topic="news" if news_only else "general", time_range="month" if news_only else None,
+                       filter_by_published_date=news_only)
             search_outcomes.append({"dimension": dimension, "status": "anonymous_identity_unresolved" if anonymous else self.search.last_status, "results": len(results)})
             searches += 1
             for result in results:
@@ -89,7 +92,7 @@ class ResearchAgent:
         if failed_urls:
             limitations.append(f"Could not retrieve {len(failed_urls)} selected source pages.")
         report = {"extraction_status": extraction["status"] if extraction["status"] != "not_run" else initial_extraction["status"],"search_outcomes": search_outcomes, "official_domain": domain, "identity_status": "buyer_supplied_domain" if domain else "unresolved","research_id": research_id, "company": company, "resolved_website": None,
-                  "status": "partial", "executive_summary": f"Retrieved {len(timeline)} source-linked search results for {company}; rule-based evidence triage requires human verification.",
+                  "status": "partial", "executive_summary": (f"Retrieved {len(timeline)} recent source-linked news results for {company}; publication dates and relevance require human verification." if news_only else f"Retrieved {len(timeline)} source-linked search results for {company}; rule-based evidence triage requires human verification."),
                   "scorecard": {}, "red_flags": [], "timeline": timeline, "recommendations": [],
                   "limitations": limitations, "sources": sources,
                   "budget_used": {"searches": searches, "extracts": int(initial_extraction["status"] != "not_run") + int(extraction["status"] != "not_run"), "deep_dive_rounds": int(bool(candidates))},

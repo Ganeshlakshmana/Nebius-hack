@@ -49,6 +49,24 @@ def test_research_calls_agent_not_model_fabrication(client,monkeypatch):
     d=client.post('/chat',json={'message':'Research Example Rail bearings'}).json()
     assert calls==['Example Rail'] and d['research_id']=='test'
 
+def test_recent_news_named_company_routes_to_tavily_news(client,monkeypatch):
+    monkeypatch.setattr('app.agents.supervisor.agent.plan_request',lambda *a:pytest.fail('News routing must not depend on model intent classification'))
+    calls=[]
+    def research(company,**kwargs):
+        calls.append((company,kwargs.get('news_only')))
+        return {'research_id':'news-test','timeline':[{'published':'2026-10-17','summary':'Nebius announced a recent update.','dimension':'Recent news','url':'https://example.com/news'}],
+                'search_outcomes':[{'status':'live_results'}],'limitations':['Verify the source.'],'model_review':{'findings':[]}}
+    monkeypatch.setattr(app.state.research,'run',research)
+    d=client.post('/chat',json={'message':'get me the recent news about the nebius or supplier'}).json()
+    assert calls==[('Nebius',True)]
+    assert d['tool_calls']==['research'] and '2026-10-17' in d['answer']
+    assert d['sources'][0]['url']=='https://example.com/news'
+
+def test_news_for_anonymous_supplier_requests_real_company(client):
+    d=client.post('/chat',json={'message':'recent news about SUPP_00012'}).json()
+    assert d['status']=='clarification_required' and not d['tool_calls']
+    assert 'real company name' in d['answer']
+
 @pytest.mark.parametrize('company',['Invented Corp','SUPP_00012'])
 def test_unrequested_or_anonymous_company_not_searched(client,monkeypatch,company):
     plan(monkeypatch,actions=[Action(tool='research',company=company)])
