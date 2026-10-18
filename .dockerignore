@@ -11,4 +11,3 @@ backend/**/*.pyc
 .vinext
 .next
 dist
-build
