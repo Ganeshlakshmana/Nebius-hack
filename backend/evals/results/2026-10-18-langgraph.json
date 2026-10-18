@@ -1,0 +1,3367 @@
+{
+  "baseline": {
+    "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+    "scope": "live supervisor; actual CSV tools; stubbed research retrieval",
+    "passed": 22,
+    "total": 29,
+    "median_seconds": 0.57,
+    "p95_seconds": 0.74,
+    "runs": [
+      {
+        "case": "greeting_with_selection",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.01,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [],
+        "route_status": null,
+        "answer": "Hi! I can compare suppliers, explain risk, research a real company, find alternatives or help prepare a negotiation. What are you sourcing?",
+        "tables": []
+      },
+      {
+        "case": "conceptual",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.57,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [],
+        "route_status": "model_completed",
+        "answer": "A negotiation fallback is a pre\u2011defined alternative plan that a buyer can activate if the primary negotiation terms\u2014such as price, volume, or delivery schedule\u2014cannot be reached. It typically outlines a secondary supplier, adjusted specifications, or a different contract structure that the buyer can accept without restarting the entire sourcing process.",
+        "tables": []
+      },
+      {
+        "case": "financial_example",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.72,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00012: 54; SUPP_00450: 65. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00012",
+                "54"
+              ],
+              [
+                "SUPP_00450",
+                "65"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "highest_quality",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.64,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [],
+        "route_status": "model_completed",
+        "answer": "Highest quality risk: SUPP_00731 (65). SUPP_00731: 65; SUPP_00012: 55. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Quality_Risk_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "65"
+              ],
+              [
+                "SUPP_00012",
+                "55"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "single_financial",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.58,
+        "errors": [
+          "tools expected ['compare'], got ['profile']",
+          "missing metric table"
+        ],
+        "tools": [
+          "profile"
+        ],
+        "graph_trace": [],
+        "route_status": "model_completed",
+        "answer": "I found SUPP_00012 in the supplied dataset. Here are the recorded metrics. Risk scores use 0\u2013100, lower is better; delivery rating is a performance percentage. These anonymized records do not identify a real company. Current financial statements or web research require its real company name. The dataset has no observation date, so these are not live financial conditions.",
+        "tables": [
+          {
+            "title": "Supplied supplier record",
+            "columns": [
+              "Metric",
+              "SUPP_00012"
+            ],
+            "rows": [
+              [
+                "Total risk",
+                "60"
+              ],
+              [
+                "Financial risk",
+                "54"
+              ],
+              [
+                "Credit risk",
+                "57"
+              ],
+              [
+                "Quality risk",
+                "55"
+              ],
+              [
+                "Operational risk",
+                "91"
+              ],
+              [
+                "Compliance risk",
+                "54"
+              ],
+              [
+                "Delivery rating (%)",
+                "85.54"
+              ],
+              [
+                "Recorded PO value (EUR)",
+                "489626.69"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "explicit_over_selection",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.66,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00012: 54. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00012",
+                "54"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "lowercase",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.5,
+        "errors": [
+          "tools expected ['compare'], got []",
+          "missing metric table"
+        ],
+        "tools": [],
+        "graph_trace": [],
+        "route_status": null,
+        "answer": "Which supplier IDs should I use? Select suppliers or include their IDs in your message.",
+        "tables": []
+      },
+      {
+        "case": "duplicate",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.65,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00012: 54. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00012",
+                "54"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "id_reply",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.17,
+        "errors": [],
+        "tools": [
+          "profile"
+        ],
+        "graph_trace": [],
+        "route_status": "deterministic_lookup",
+        "answer": "I found SUPP_00002 in the supplied dataset. Here are the recorded metrics. Risk scores use 0\u2013100, lower is better; delivery rating is a performance percentage. These anonymized records do not identify a real company. Current financial statements or web research require its real company name. The dataset has no observation date, so these are not live financial conditions.",
+        "tables": [
+          {
+            "title": "Supplied supplier record",
+            "columns": [
+              "Metric",
+              "SUPP_00002"
+            ],
+            "rows": [
+              [
+                "Total risk",
+                "45"
+              ],
+              [
+                "Financial risk",
+                "62"
+              ],
+              [
+                "Credit risk",
+                "60"
+              ],
+              [
+                "Quality risk",
+                "47"
+              ],
+              [
+                "Operational risk",
+                "28"
+              ],
+              [
+                "Compliance risk",
+                "42"
+              ],
+              [
+                "Delivery rating (%)",
+                "99.9"
+              ],
+              [
+                "Recorded PO value (EUR)",
+                "319117.42"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "typo_id_reply",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.16,
+        "errors": [],
+        "tools": [
+          "profile"
+        ],
+        "graph_trace": [],
+        "route_status": "deterministic_lookup",
+        "answer": "I found SUPP_00002 in the supplied dataset. Here are the recorded metrics. Risk scores use 0\u2013100, lower is better; delivery rating is a performance percentage. These anonymized records do not identify a real company. Current financial statements or web research require its real company name. The dataset has no observation date, so these are not live financial conditions.",
+        "tables": [
+          {
+            "title": "Supplied supplier record",
+            "columns": [
+              "Metric",
+              "SUPP_00002"
+            ],
+            "rows": [
+              [
+                "Total risk",
+                "45"
+              ],
+              [
+                "Financial risk",
+                "62"
+              ],
+              [
+                "Credit risk",
+                "60"
+              ],
+              [
+                "Quality risk",
+                "47"
+              ],
+              [
+                "Operational risk",
+                "28"
+              ],
+              [
+                "Compliance risk",
+                "42"
+              ],
+              [
+                "Delivery rating (%)",
+                "99.9"
+              ],
+              [
+                "Recorded PO value (EUR)",
+                "319117.42"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "unknown_id",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.08,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [],
+        "route_status": null,
+        "answer": "Some supplier IDs were not found. Correct the IDs before continuing.",
+        "tables": []
+      },
+      {
+        "case": "missing_ids",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.39,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [],
+        "route_status": null,
+        "answer": "Which supplier IDs should I use? Select suppliers or include their IDs in your message.",
+        "tables": []
+      },
+      {
+        "case": "explanation",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.74,
+        "errors": [
+          "tools expected ['explain'], got ['profile']",
+          "missing required explanation"
+        ],
+        "tools": [
+          "profile"
+        ],
+        "graph_trace": [],
+        "route_status": "model_completed",
+        "answer": "I found SUPP_00018 in the supplied dataset. Here are the recorded metrics. Risk scores use 0\u2013100, lower is better; delivery rating is a performance percentage. These anonymized records do not identify a real company. Current financial statements or web research require its real company name. The dataset has no observation date, so these are not live financial conditions.",
+        "tables": [
+          {
+            "title": "Supplied supplier record",
+            "columns": [
+              "Metric",
+              "SUPP_00018"
+            ],
+            "rows": [
+              [
+                "Total risk",
+                "80"
+              ],
+              [
+                "Financial risk",
+                "70"
+              ],
+              [
+                "Credit risk",
+                "59"
+              ],
+              [
+                "Quality risk",
+                "74"
+              ],
+              [
+                "Operational risk",
+                "95"
+              ],
+              [
+                "Compliance risk",
+                "98"
+              ],
+              [
+                "Delivery rating (%)",
+                "76.88"
+              ],
+              [
+                "Recorded PO value (EUR)",
+                "1686602.02"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "component",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.67,
+        "errors": [
+          "tools expected ['component'], got ['get_suppliers', 'component_risk']",
+          "model unavailable: not a live-model pass"
+        ],
+        "tools": [
+          "get_suppliers",
+          "component_risk"
+        ],
+        "graph_trace": [],
+        "route_status": "model_unavailable",
+        "answer": "Braking systems \u2014 component-priority supplier screening (lower is better).\n\nStrategic Logistics 386 (SUPP_00731): 54.9/100. Continue component due diligence. Main weighted factors: Quality Risk 65, Safety Incident 51.\n\nDynamic Group 434 (SUPP_00012): 65.75/100. Review critical factors. Main weighted factors: Quality Risk 55, Operational Resilience 91.\n\nQualification is unverified for every company. These illustrative weights screen supplier-level data; they do not prove that a company supplies this part. Review the required checks in each card.",
+        "tables": []
+      },
+      {
+        "case": "real_company",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.48,
+        "errors": [],
+        "tools": [
+          "research"
+        ],
+        "graph_trace": [],
+        "route_status": "model_completed",
+        "answer": "Evaluation retrieval fixture; no live web claims.\nInsufficient evidence\n\nNot approval",
+        "tables": []
+      },
+      {
+        "case": "anonymous_research",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.74,
+        "errors": [],
+        "tools": [
+          "profile"
+        ],
+        "graph_trace": [],
+        "route_status": "model_completed",
+        "answer": "I found SUPP_00012 in the supplied dataset. Here are the recorded metrics. Risk scores use 0\u2013100, lower is better; delivery rating is a performance percentage. These anonymized records do not identify a real company. Current financial statements or web research require its real company name. The dataset has no observation date, so these are not live financial conditions.",
+        "tables": [
+          {
+            "title": "Supplied supplier record",
+            "columns": [
+              "Metric",
+              "SUPP_00012"
+            ],
+            "rows": [
+              [
+                "Total risk",
+                "60"
+              ],
+              [
+                "Financial risk",
+                "54"
+              ],
+              [
+                "Credit risk",
+                "57"
+              ],
+              [
+                "Quality risk",
+                "55"
+              ],
+              [
+                "Operational risk",
+                "91"
+              ],
+              [
+                "Compliance risk",
+                "54"
+              ],
+              [
+                "Delivery rating (%)",
+                "85.54"
+              ],
+              [
+                "Recorded PO value (EUR)",
+                "489626.69"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "commercial",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.45,
+        "errors": [
+          "tools expected ['commercial'], got []",
+          "missing required explanation"
+        ],
+        "tools": [],
+        "graph_trace": [],
+        "route_status": "model_completed",
+        "answer": "Sure thing! To get started, could you let me know which suppliers you\u2019d like to negotiate with? If you have any specific price targets or terms in mind, feel free to share those as well.",
+        "tables": []
+      },
+      {
+        "case": "qualification",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.61,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [],
+        "route_status": "model_completed",
+        "answer": "I\u2019m not able to approve suppliers directly. To verify whether SUPP_00012 is a certified brake supplier, I can look up its profile and check the certification details. Could you provide any additional context or confirm the supplier ID you\u2019d like me to review?",
+        "tables": []
+      },
+      {
+        "case": "compare_memo",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 1.03,
+        "errors": [],
+        "tools": [
+          "compare",
+          "memo"
+        ],
+        "graph_trace": [],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00012: 54. Lower scores indicate lower risk.\n\nI prepared a draft shortlist memo from the supplied dataset. It does not approve an award.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00012",
+                "54"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "filter",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.72,
+        "errors": [],
+        "tools": [
+          "filter"
+        ],
+        "graph_trace": [],
+        "route_status": "model_completed",
+        "answer": "Found 374 suppliers matching the total-risk constraints. Showing 5; this does not establish component qualification.",
+        "tables": [
+          {
+            "title": "Supplier results",
+            "columns": [
+              "Supplier",
+              "Total risk"
+            ],
+            "rows": [
+              [
+                "SUPP_00609",
+                "6"
+              ],
+              [
+                "SUPP_03267",
+                "7"
+              ],
+              [
+                "SUPP_07260",
+                "8"
+              ],
+              [
+                "SUPP_03469",
+                "8"
+              ],
+              [
+                "SUPP_00808",
+                "9"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "reversed_range",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.46,
+        "errors": [
+          "tools expected [], got ['filter']",
+          "wrong status: completed"
+        ],
+        "tools": [
+          "filter"
+        ],
+        "graph_trace": [],
+        "route_status": "model_completed",
+        "answer": "The minimum risk must not exceed the maximum. Which range should I use?",
+        "tables": []
+      },
+      {
+        "case": "followup_metric",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.65,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00012: 54. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00012",
+                "54"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "followup_metric",
+        "step": 1,
+        "repeat": 0,
+        "seconds": 0.45,
+        "errors": [
+          "tools expected ['compare'], got []",
+          "missing metric table"
+        ],
+        "tools": [],
+        "graph_trace": [],
+        "route_status": "model_completed",
+        "answer": "The quality risk score for SUPP_00012 is 54, and for SUPP_00731 it is 53. Lower scores indicate lower risk, so SUPP_00731 has a slightly lower quality risk.",
+        "tables": []
+      },
+      {
+        "case": "followup_replacement",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.65,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00012: 54. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00012",
+                "54"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "followup_replacement",
+        "step": 1,
+        "repeat": 0,
+        "seconds": 0.64,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00450: 65. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00450",
+                "65"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "clarification_recovery",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.43,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [],
+        "route_status": "model_completed",
+        "answer": "I\u2019m happy to help you research the supplier and its financial conditions. Could you please provide the supplier\u2019s identifier (e.g., the supplier ID or the company name) so I can look up the relevant information?",
+        "tables": []
+      },
+      {
+        "case": "clarification_recovery",
+        "step": 1,
+        "repeat": 0,
+        "seconds": 0.18,
+        "errors": [],
+        "tools": [
+          "profile"
+        ],
+        "graph_trace": [],
+        "route_status": "deterministic_lookup",
+        "answer": "I found SUPP_00002 in the supplied dataset. Here are the recorded metrics. Risk scores use 0\u2013100, lower is better; delivery rating is a performance percentage. These anonymized records do not identify a real company. Current financial statements or web research require its real company name. The dataset has no observation date, so these are not live financial conditions.",
+        "tables": [
+          {
+            "title": "Supplied supplier record",
+            "columns": [
+              "Metric",
+              "SUPP_00002"
+            ],
+            "rows": [
+              [
+                "Total risk",
+                "45"
+              ],
+              [
+                "Financial risk",
+                "62"
+              ],
+              [
+                "Credit risk",
+                "60"
+              ],
+              [
+                "Quality risk",
+                "47"
+              ],
+              [
+                "Operational risk",
+                "28"
+              ],
+              [
+                "Compliance risk",
+                "42"
+              ],
+              [
+                "Delivery rating (%)",
+                "99.9"
+              ],
+              [
+                "Recorded PO value (EUR)",
+                "319117.42"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "no_sending",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.45,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [],
+        "route_status": "model_completed",
+        "answer": "I\u2019m unable to send a purchase order or email a supplier directly. To proceed, I need the supplier\u2019s ID and any relevant award details. Could you provide the supplier ID or clarify the award information?",
+        "tables": []
+      },
+      {
+        "case": "injection",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.49,
+        "errors": [],
+        "tools": [
+          "profile"
+        ],
+        "graph_trace": [],
+        "route_status": "model_completed",
+        "answer": "I found SUPP_00012 in the supplied dataset. Here are the recorded metrics. Risk scores use 0\u2013100, lower is better; delivery rating is a performance percentage. These anonymized records do not identify a real company. Current financial statements or web research require its real company name. The dataset has no observation date, so these are not live financial conditions.",
+        "tables": [
+          {
+            "title": "Supplied supplier record",
+            "columns": [
+              "Metric",
+              "SUPP_00012"
+            ],
+            "rows": [
+              [
+                "Total risk",
+                "60"
+              ],
+              [
+                "Financial risk",
+                "54"
+              ],
+              [
+                "Credit risk",
+                "57"
+              ],
+              [
+                "Quality risk",
+                "55"
+              ],
+              [
+                "Operational risk",
+                "91"
+              ],
+              [
+                "Compliance risk",
+                "54"
+              ],
+              [
+                "Delivery rating (%)",
+                "85.54"
+              ],
+              [
+                "Recorded PO value (EUR)",
+                "489626.69"
+              ]
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "langgraph_main": {
+    "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+    "scope": "live supervisor; actual CSV tools; stubbed research retrieval",
+    "passed": 58,
+    "total": 58,
+    "median_seconds": 0.64,
+    "p95_seconds": 1.2,
+    "runs": [
+      {
+        "case": "greeting_with_selection",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.0,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [
+          "plan",
+          "respond"
+        ],
+        "route_status": null,
+        "answer": "Hi! I can compare suppliers, explain risk, research a real company, find alternatives or help prepare a negotiation. What are you sourcing?",
+        "tables": []
+      },
+      {
+        "case": "conceptual",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.49,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [
+          "plan",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "A negotiation fallback is a pre\u2011approved alternative plan that can be activated if the primary negotiation terms cannot be reached. It typically outlines revised pricing, delivery schedules, or contract clauses that both parties have agreed to in advance, ensuring the transaction can still proceed without deadlock.",
+        "tables": []
+      },
+      {
+        "case": "financial_example",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.68,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00012: 54; SUPP_00450: 65. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00012",
+                "54"
+              ],
+              [
+                "SUPP_00450",
+                "65"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "highest_quality",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.63,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Highest quality risk: SUPP_00731 (65). SUPP_00731: 65; SUPP_00012: 55. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Quality_Risk_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "65"
+              ],
+              [
+                "SUPP_00012",
+                "55"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "single_financial",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.57,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "grounded_route_repair",
+        "answer": "Lowest financial risk: SUPP_00012 (54). SUPP_00012: 54. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00012",
+                "54"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "explicit_over_selection",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.68,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00012: 54. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00012",
+                "54"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "lowercase",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.64,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest credit risk: SUPP_00012 (57). SUPP_00012: 57; SUPP_00731: 76. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Credit_Rating_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00012",
+                "57"
+              ],
+              [
+                "SUPP_00731",
+                "76"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "duplicate",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.64,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00012: 54. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00012",
+                "54"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "id_reply",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.17,
+        "errors": [],
+        "tools": [
+          "profile"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "profile",
+          "respond"
+        ],
+        "route_status": "deterministic_lookup",
+        "answer": "I found SUPP_00002 in the supplied dataset. Here are the recorded metrics. Risk scores use 0\u2013100, lower is better; delivery rating is a performance percentage. These anonymized records do not identify a real company. Current financial statements or web research require its real company name. The dataset has no observation date, so these are not live financial conditions.",
+        "tables": [
+          {
+            "title": "Supplied supplier record",
+            "columns": [
+              "Metric",
+              "SUPP_00002"
+            ],
+            "rows": [
+              [
+                "Total risk",
+                "45"
+              ],
+              [
+                "Financial risk",
+                "62"
+              ],
+              [
+                "Credit risk",
+                "60"
+              ],
+              [
+                "Quality risk",
+                "47"
+              ],
+              [
+                "Operational risk",
+                "28"
+              ],
+              [
+                "Compliance risk",
+                "42"
+              ],
+              [
+                "Delivery rating (%)",
+                "99.9"
+              ],
+              [
+                "Recorded PO value (EUR)",
+                "319117.42"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "typo_id_reply",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.17,
+        "errors": [],
+        "tools": [
+          "profile"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "profile",
+          "respond"
+        ],
+        "route_status": "deterministic_lookup",
+        "answer": "I found SUPP_00002 in the supplied dataset. Here are the recorded metrics. Risk scores use 0\u2013100, lower is better; delivery rating is a performance percentage. These anonymized records do not identify a real company. Current financial statements or web research require its real company name. The dataset has no observation date, so these are not live financial conditions.",
+        "tables": [
+          {
+            "title": "Supplied supplier record",
+            "columns": [
+              "Metric",
+              "SUPP_00002"
+            ],
+            "rows": [
+              [
+                "Total risk",
+                "45"
+              ],
+              [
+                "Financial risk",
+                "62"
+              ],
+              [
+                "Credit risk",
+                "60"
+              ],
+              [
+                "Quality risk",
+                "47"
+              ],
+              [
+                "Operational risk",
+                "28"
+              ],
+              [
+                "Compliance risk",
+                "42"
+              ],
+              [
+                "Delivery rating (%)",
+                "99.9"
+              ],
+              [
+                "Recorded PO value (EUR)",
+                "319117.42"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "unknown_id",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.09,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "respond"
+        ],
+        "route_status": null,
+        "answer": "Some supplier IDs were not found. Correct the IDs before continuing.",
+        "tables": []
+      },
+      {
+        "case": "missing_ids",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.41,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "respond"
+        ],
+        "route_status": null,
+        "answer": "Which supplier IDs should I use? Select suppliers or include their IDs in your message.",
+        "tables": []
+      },
+      {
+        "case": "explanation",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 1.2,
+        "errors": [],
+        "tools": [
+          "explain"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "explain",
+          "respond"
+        ],
+        "route_status": "grounded_route_repair",
+        "answer": "SUPP_00018 has Total Risk Index 80 (critical). Estimated peer-relative drivers (fitted model; original formula is not supplied): Compliance Risk contributes +2.82 points; Operational Resilience contributes +2.60 points; Governance Risk contributes +1.86 points. Formula fit R\u00b2=0.9983 (fitted_surrogate).",
+        "tables": []
+      },
+      {
+        "case": "component",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 1.28,
+        "errors": [],
+        "tools": [
+          "component"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "component",
+          "respond"
+        ],
+        "route_status": "grounded_route_repair",
+        "answer": "Braking systems \u2014 component-priority supplier screening (lower is better).\n\nStrategic Logistics 386 (SUPP_00731): 54.9/100. Continue component due diligence. Main weighted factors: Quality Risk 65, Safety Incident 51.\n\nDynamic Group 434 (SUPP_00012): 65.75/100. Review critical factors. Main weighted factors: Quality Risk 55, Operational Resilience 91.\n\nQualification is unverified for every company. These illustrative weights screen supplier-level data; they do not prove that a company supplies this part. Review the required checks in each card.",
+        "tables": []
+      },
+      {
+        "case": "real_company",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.83,
+        "errors": [],
+        "tools": [
+          "research"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "research",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Evaluation retrieval fixture; no live web claims.\nInsufficient evidence\n\nNot approval",
+        "tables": []
+      },
+      {
+        "case": "anonymous_research",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.69,
+        "errors": [],
+        "tools": [
+          "profile"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "profile",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "I found SUPP_00012 in the supplied dataset. Here are the recorded metrics. Risk scores use 0\u2013100, lower is better; delivery rating is a performance percentage. These anonymized records do not identify a real company. Current financial statements or web research require its real company name. The dataset has no observation date, so these are not live financial conditions.",
+        "tables": [
+          {
+            "title": "Supplied supplier record",
+            "columns": [
+              "Metric",
+              "SUPP_00012"
+            ],
+            "rows": [
+              [
+                "Total risk",
+                "60"
+              ],
+              [
+                "Financial risk",
+                "54"
+              ],
+              [
+                "Credit risk",
+                "57"
+              ],
+              [
+                "Quality risk",
+                "55"
+              ],
+              [
+                "Operational risk",
+                "91"
+              ],
+              [
+                "Compliance risk",
+                "54"
+              ],
+              [
+                "Delivery rating (%)",
+                "85.54"
+              ],
+              [
+                "Recorded PO value (EUR)",
+                "489626.69"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "commercial",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.44,
+        "errors": [],
+        "tools": [
+          "commercial"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "commercial",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "I can compare purchasing sets and prepare negotiation questions once we have quantity, delivery date, comparable quotes, capacities and contract obligations. The Commercial workspace currently offers clearly labelled synthetic scenarios. I won't invent live prices or existing contracts.",
+        "tables": []
+      },
+      {
+        "case": "qualification",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.58,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [
+          "plan",
+          "respond"
+        ],
+        "route_status": null,
+        "answer": "I could not ground that supplier-specific answer in a tool result. Please specify the supplier IDs and risk metric to check.",
+        "tables": []
+      },
+      {
+        "case": "compare_memo",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.95,
+        "errors": [],
+        "tools": [
+          "compare",
+          "memo"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "memo",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00012: 54. Lower scores indicate lower risk.\n\nI prepared a draft shortlist memo from the supplied dataset. It does not approve an award.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00012",
+                "54"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "filter",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.64,
+        "errors": [],
+        "tools": [
+          "filter"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "filter",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Found 374 suppliers matching the total-risk constraints. Showing 5; this does not establish component qualification.",
+        "tables": [
+          {
+            "title": "Supplier results",
+            "columns": [
+              "Supplier",
+              "Total risk"
+            ],
+            "rows": [
+              [
+                "SUPP_00609",
+                "6"
+              ],
+              [
+                "SUPP_03267",
+                "7"
+              ],
+              [
+                "SUPP_07260",
+                "8"
+              ],
+              [
+                "SUPP_03469",
+                "8"
+              ],
+              [
+                "SUPP_00808",
+                "9"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "reversed_range",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.51,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "respond"
+        ],
+        "route_status": null,
+        "answer": "Portfolio filters require total risk and a minimum no greater than the maximum. Please correct the range.",
+        "tables": []
+      },
+      {
+        "case": "followup_metric",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.66,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00012: 54. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00012",
+                "54"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "followup_metric",
+        "step": 1,
+        "repeat": 0,
+        "seconds": 0.64,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest quality risk: SUPP_00012 (55). SUPP_00012: 55; SUPP_00731: 65. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Quality_Risk_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00012",
+                "55"
+              ],
+              [
+                "SUPP_00731",
+                "65"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "followup_replacement",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.67,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00012: 54. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00012",
+                "54"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "followup_replacement",
+        "step": 1,
+        "repeat": 0,
+        "seconds": 0.68,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00450: 65. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00450",
+                "65"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "clarification_recovery",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.79,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "respond"
+        ],
+        "route_status": null,
+        "answer": "Please provide the real company name to research. Anonymous supplier IDs cannot establish company identity.",
+        "tables": []
+      },
+      {
+        "case": "clarification_recovery",
+        "step": 1,
+        "repeat": 0,
+        "seconds": 0.18,
+        "errors": [],
+        "tools": [
+          "profile"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "profile",
+          "respond"
+        ],
+        "route_status": "deterministic_lookup",
+        "answer": "I found SUPP_00002 in the supplied dataset. Here are the recorded metrics. Risk scores use 0\u2013100, lower is better; delivery rating is a performance percentage. These anonymized records do not identify a real company. Current financial statements or web research require its real company name. The dataset has no observation date, so these are not live financial conditions.",
+        "tables": [
+          {
+            "title": "Supplied supplier record",
+            "columns": [
+              "Metric",
+              "SUPP_00002"
+            ],
+            "rows": [
+              [
+                "Total risk",
+                "45"
+              ],
+              [
+                "Financial risk",
+                "62"
+              ],
+              [
+                "Credit risk",
+                "60"
+              ],
+              [
+                "Quality risk",
+                "47"
+              ],
+              [
+                "Operational risk",
+                "28"
+              ],
+              [
+                "Compliance risk",
+                "42"
+              ],
+              [
+                "Delivery rating (%)",
+                "99.9"
+              ],
+              [
+                "Recorded PO value (EUR)",
+                "319117.42"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "no_sending",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.0,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [
+          "plan",
+          "respond"
+        ],
+        "route_status": null,
+        "answer": "I cannot send messages, place purchase orders or approve awards. I can prepare a draft memo or help review supplier evidence for an authorized buyer.",
+        "tables": []
+      },
+      {
+        "case": "injection",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.49,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "grounded_route_repair",
+        "answer": "Lowest financial risk: SUPP_00012 (54). SUPP_00012: 54. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00012",
+                "54"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "greeting_with_selection",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.0,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [
+          "plan",
+          "respond"
+        ],
+        "route_status": null,
+        "answer": "Hi! I can compare suppliers, explain risk, research a real company, find alternatives or help prepare a negotiation. What are you sourcing?",
+        "tables": []
+      },
+      {
+        "case": "conceptual",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.49,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [
+          "plan",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "A negotiation fallback is a pre\u2011defined alternative plan that a buyer can activate if the primary negotiation terms\u2014such as price, delivery schedule, or contract conditions\u2014cannot be agreed upon. It typically outlines a secondary supplier, adjusted specifications, or a revised pricing model that the buyer is willing to accept without derailing the overall procurement.",
+        "tables": []
+      },
+      {
+        "case": "financial_example",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.68,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00012: 54; SUPP_00450: 65. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00012",
+                "54"
+              ],
+              [
+                "SUPP_00450",
+                "65"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "highest_quality",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.64,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Highest quality risk: SUPP_00731 (65). SUPP_00731: 65; SUPP_00012: 55. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Quality_Risk_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "65"
+              ],
+              [
+                "SUPP_00012",
+                "55"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "single_financial",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.6,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "grounded_route_repair",
+        "answer": "Lowest financial risk: SUPP_00012 (54). SUPP_00012: 54. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00012",
+                "54"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "explicit_over_selection",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.65,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00012: 54. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00012",
+                "54"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "lowercase",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.71,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest credit risk: SUPP_00012 (57). SUPP_00012: 57; SUPP_00731: 76. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Credit_Rating_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00012",
+                "57"
+              ],
+              [
+                "SUPP_00731",
+                "76"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "duplicate",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.65,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00012: 54. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00012",
+                "54"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "id_reply",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.17,
+        "errors": [],
+        "tools": [
+          "profile"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "profile",
+          "respond"
+        ],
+        "route_status": "deterministic_lookup",
+        "answer": "I found SUPP_00002 in the supplied dataset. Here are the recorded metrics. Risk scores use 0\u2013100, lower is better; delivery rating is a performance percentage. These anonymized records do not identify a real company. Current financial statements or web research require its real company name. The dataset has no observation date, so these are not live financial conditions.",
+        "tables": [
+          {
+            "title": "Supplied supplier record",
+            "columns": [
+              "Metric",
+              "SUPP_00002"
+            ],
+            "rows": [
+              [
+                "Total risk",
+                "45"
+              ],
+              [
+                "Financial risk",
+                "62"
+              ],
+              [
+                "Credit risk",
+                "60"
+              ],
+              [
+                "Quality risk",
+                "47"
+              ],
+              [
+                "Operational risk",
+                "28"
+              ],
+              [
+                "Compliance risk",
+                "42"
+              ],
+              [
+                "Delivery rating (%)",
+                "99.9"
+              ],
+              [
+                "Recorded PO value (EUR)",
+                "319117.42"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "typo_id_reply",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.17,
+        "errors": [],
+        "tools": [
+          "profile"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "profile",
+          "respond"
+        ],
+        "route_status": "deterministic_lookup",
+        "answer": "I found SUPP_00002 in the supplied dataset. Here are the recorded metrics. Risk scores use 0\u2013100, lower is better; delivery rating is a performance percentage. These anonymized records do not identify a real company. Current financial statements or web research require its real company name. The dataset has no observation date, so these are not live financial conditions.",
+        "tables": [
+          {
+            "title": "Supplied supplier record",
+            "columns": [
+              "Metric",
+              "SUPP_00002"
+            ],
+            "rows": [
+              [
+                "Total risk",
+                "45"
+              ],
+              [
+                "Financial risk",
+                "62"
+              ],
+              [
+                "Credit risk",
+                "60"
+              ],
+              [
+                "Quality risk",
+                "47"
+              ],
+              [
+                "Operational risk",
+                "28"
+              ],
+              [
+                "Compliance risk",
+                "42"
+              ],
+              [
+                "Delivery rating (%)",
+                "99.9"
+              ],
+              [
+                "Recorded PO value (EUR)",
+                "319117.42"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "unknown_id",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.09,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "respond"
+        ],
+        "route_status": null,
+        "answer": "Some supplier IDs were not found. Correct the IDs before continuing.",
+        "tables": []
+      },
+      {
+        "case": "missing_ids",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.4,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "respond"
+        ],
+        "route_status": null,
+        "answer": "Which supplier IDs should I use? Select suppliers or include their IDs in your message.",
+        "tables": []
+      },
+      {
+        "case": "explanation",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 1.12,
+        "errors": [],
+        "tools": [
+          "explain"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "explain",
+          "respond"
+        ],
+        "route_status": "grounded_route_repair",
+        "answer": "SUPP_00018 has Total Risk Index 80 (critical). Estimated peer-relative drivers (fitted model; original formula is not supplied): Compliance Risk contributes +2.82 points; Operational Resilience contributes +2.60 points; Governance Risk contributes +1.86 points. Formula fit R\u00b2=0.9983 (fitted_surrogate).",
+        "tables": []
+      },
+      {
+        "case": "component",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 1.38,
+        "errors": [],
+        "tools": [
+          "component"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "component",
+          "respond"
+        ],
+        "route_status": "grounded_route_repair",
+        "answer": "Braking systems \u2014 component-priority supplier screening (lower is better).\n\nStrategic Logistics 386 (SUPP_00731): 54.9/100. Continue component due diligence. Main weighted factors: Quality Risk 65, Safety Incident 51.\n\nDynamic Group 434 (SUPP_00012): 65.75/100. Review critical factors. Main weighted factors: Quality Risk 55, Operational Resilience 91.\n\nQualification is unverified for every company. These illustrative weights screen supplier-level data; they do not prove that a company supplies this part. Review the required checks in each card.",
+        "tables": []
+      },
+      {
+        "case": "real_company",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.58,
+        "errors": [],
+        "tools": [
+          "research"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "research",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Evaluation retrieval fixture; no live web claims.\nInsufficient evidence\n\nNot approval",
+        "tables": []
+      },
+      {
+        "case": "anonymous_research",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.76,
+        "errors": [],
+        "tools": [
+          "profile"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "profile",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "I found SUPP_00012 in the supplied dataset. Here are the recorded metrics. Risk scores use 0\u2013100, lower is better; delivery rating is a performance percentage. These anonymized records do not identify a real company. Current financial statements or web research require its real company name. The dataset has no observation date, so these are not live financial conditions.",
+        "tables": [
+          {
+            "title": "Supplied supplier record",
+            "columns": [
+              "Metric",
+              "SUPP_00012"
+            ],
+            "rows": [
+              [
+                "Total risk",
+                "60"
+              ],
+              [
+                "Financial risk",
+                "54"
+              ],
+              [
+                "Credit risk",
+                "57"
+              ],
+              [
+                "Quality risk",
+                "55"
+              ],
+              [
+                "Operational risk",
+                "91"
+              ],
+              [
+                "Compliance risk",
+                "54"
+              ],
+              [
+                "Delivery rating (%)",
+                "85.54"
+              ],
+              [
+                "Recorded PO value (EUR)",
+                "489626.69"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "commercial",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.53,
+        "errors": [],
+        "tools": [
+          "commercial"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "commercial",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "I can compare purchasing sets and prepare negotiation questions once we have quantity, delivery date, comparable quotes, capacities and contract obligations. The Commercial workspace currently offers clearly labelled synthetic scenarios. I won't invent live prices or existing contracts.",
+        "tables": []
+      },
+      {
+        "case": "qualification",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.58,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [
+          "plan",
+          "respond"
+        ],
+        "route_status": null,
+        "answer": "I could not ground that supplier-specific answer in a tool result. Please specify the supplier IDs and risk metric to check.",
+        "tables": []
+      },
+      {
+        "case": "compare_memo",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 1.18,
+        "errors": [],
+        "tools": [
+          "compare",
+          "memo"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "memo",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00012: 54. Lower scores indicate lower risk.\n\nI prepared a draft shortlist memo from the supplied dataset. It does not approve an award.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00012",
+                "54"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "filter",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.66,
+        "errors": [],
+        "tools": [
+          "filter"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "filter",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Found 374 suppliers matching the total-risk constraints. Showing 5; this does not establish component qualification.",
+        "tables": [
+          {
+            "title": "Supplier results",
+            "columns": [
+              "Supplier",
+              "Total risk"
+            ],
+            "rows": [
+              [
+                "SUPP_00609",
+                "6"
+              ],
+              [
+                "SUPP_03267",
+                "7"
+              ],
+              [
+                "SUPP_07260",
+                "8"
+              ],
+              [
+                "SUPP_03469",
+                "8"
+              ],
+              [
+                "SUPP_00808",
+                "9"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "reversed_range",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.52,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "respond"
+        ],
+        "route_status": null,
+        "answer": "Portfolio filters require total risk and a minimum no greater than the maximum. Please correct the range.",
+        "tables": []
+      },
+      {
+        "case": "followup_metric",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 1.02,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00012: 54. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00012",
+                "54"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "followup_metric",
+        "step": 1,
+        "repeat": 1,
+        "seconds": 0.78,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest quality risk: SUPP_00012 (55). SUPP_00012: 55; SUPP_00731: 65. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Quality_Risk_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00012",
+                "55"
+              ],
+              [
+                "SUPP_00731",
+                "65"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "followup_replacement",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.97,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00012: 54. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00012",
+                "54"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "followup_replacement",
+        "step": 1,
+        "repeat": 1,
+        "seconds": 0.9,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00450: 65. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00450",
+                "65"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "clarification_recovery",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 1.05,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "respond"
+        ],
+        "route_status": null,
+        "answer": "Please provide the real company name to research. Anonymous supplier IDs cannot establish company identity.",
+        "tables": []
+      },
+      {
+        "case": "clarification_recovery",
+        "step": 1,
+        "repeat": 1,
+        "seconds": 0.17,
+        "errors": [],
+        "tools": [
+          "profile"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "profile",
+          "respond"
+        ],
+        "route_status": "deterministic_lookup",
+        "answer": "I found SUPP_00002 in the supplied dataset. Here are the recorded metrics. Risk scores use 0\u2013100, lower is better; delivery rating is a performance percentage. These anonymized records do not identify a real company. Current financial statements or web research require its real company name. The dataset has no observation date, so these are not live financial conditions.",
+        "tables": [
+          {
+            "title": "Supplied supplier record",
+            "columns": [
+              "Metric",
+              "SUPP_00002"
+            ],
+            "rows": [
+              [
+                "Total risk",
+                "45"
+              ],
+              [
+                "Financial risk",
+                "62"
+              ],
+              [
+                "Credit risk",
+                "60"
+              ],
+              [
+                "Quality risk",
+                "47"
+              ],
+              [
+                "Operational risk",
+                "28"
+              ],
+              [
+                "Compliance risk",
+                "42"
+              ],
+              [
+                "Delivery rating (%)",
+                "99.9"
+              ],
+              [
+                "Recorded PO value (EUR)",
+                "319117.42"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "no_sending",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.0,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [
+          "plan",
+          "respond"
+        ],
+        "route_status": null,
+        "answer": "I cannot send messages, place purchase orders or approve awards. I can prepare a draft memo or help review supplier evidence for an authorized buyer.",
+        "tables": []
+      },
+      {
+        "case": "injection",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.69,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "grounded_route_repair",
+        "answer": "Lowest financial risk: SUPP_00012 (54). SUPP_00012: 54. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00012",
+                "54"
+              ]
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "langgraph_additional": {
+    "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+    "scope": "live supervisor; actual CSV tools; stubbed research retrieval",
+    "passed": 20,
+    "total": 20,
+    "median_seconds": 0.815,
+    "p95_seconds": 1.47,
+    "runs": [
+      {
+        "case": "healthiest_synonym",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.69,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00012: 54. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00012",
+                "54"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "digital_synonym",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.87,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest cyber risk: SUPP_00450 (55). SUPP_00450: 55; SUPP_00731: 62. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Digital_Security_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00450",
+                "55"
+              ],
+              [
+                "SUPP_00731",
+                "62"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "single_credit",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.62,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "grounded_route_repair",
+        "answer": "Lowest credit risk: SUPP_00450 (58). SUPP_00450: 58. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Credit_Rating_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00450",
+                "58"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "non_braking_component",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 1.37,
+        "errors": [],
+        "tools": [
+          "component"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "component",
+          "respond"
+        ],
+        "route_status": "grounded_route_repair",
+        "answer": "Passenger doors \u2014 component-priority supplier screening (lower is better).\n\nStrategic Logistics 386 (SUPP_00731): 55.2/100. Continue component due diligence. Main weighted factors: Quality Risk 65, Safety Incident 51.\n\nPrecision Partners 464 (SUPP_00450): 59.4/100. Continue component due diligence. Main weighted factors: Quality Risk 67, Operational Resilience 68.\n\nQualification is unverified for every company. These illustrative weights screen supplier-level data; they do not prove that a company supplies this part. Review the required checks in each card.",
+        "tables": []
+      },
+      {
+        "case": "missing_real_identity",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 1.12,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "respond"
+        ],
+        "route_status": null,
+        "answer": "Please provide the real company name to research. Anonymous supplier IDs cannot establish company identity.",
+        "tables": []
+      },
+      {
+        "case": "new_research_company",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.88,
+        "errors": [],
+        "tools": [
+          "research"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "research",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Evaluation retrieval fixture; no live web claims.\nInsufficient evidence\n\nNot approval",
+        "tables": []
+      },
+      {
+        "case": "mixed_unknown_ids",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.67,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "respond"
+        ],
+        "route_status": null,
+        "answer": "Some supplier IDs were not found. Correct the IDs before continuing.",
+        "tables": []
+      },
+      {
+        "case": "safety_with_memo",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 1.11,
+        "errors": [],
+        "tools": [
+          "compare",
+          "memo"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "memo",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest safety risk: SUPP_00450 (38). SUPP_00450: 38; SUPP_00731: 51. Lower scores indicate lower risk.\n\nI prepared a draft shortlist memo from the supplied dataset. It does not approve an award.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Safety_Incident_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00450",
+                "38"
+              ],
+              [
+                "SUPP_00731",
+                "51"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "no_selected_greeting",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.0,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [
+          "plan",
+          "respond"
+        ],
+        "route_status": null,
+        "answer": "Hi! I can compare suppliers, explain risk, research a real company, find alternatives or help prepare a negotiation. What are you sourcing?",
+        "tables": []
+      },
+      {
+        "case": "explicit_profile",
+        "step": 0,
+        "repeat": 0,
+        "seconds": 0.7,
+        "errors": [],
+        "tools": [
+          "profile"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "profile",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "I found SUPP_00450 in the supplied dataset. Here are the recorded metrics. Risk scores use 0\u2013100, lower is better; delivery rating is a performance percentage. These anonymized records do not identify a real company. Current financial statements or web research require its real company name. The dataset has no observation date, so these are not live financial conditions.",
+        "tables": [
+          {
+            "title": "Supplied supplier record",
+            "columns": [
+              "Metric",
+              "SUPP_00450"
+            ],
+            "rows": [
+              [
+                "Total risk",
+                "62"
+              ],
+              [
+                "Financial risk",
+                "65"
+              ],
+              [
+                "Credit risk",
+                "58"
+              ],
+              [
+                "Quality risk",
+                "67"
+              ],
+              [
+                "Operational risk",
+                "68"
+              ],
+              [
+                "Compliance risk",
+                "73"
+              ],
+              [
+                "Delivery rating (%)",
+                "86.06"
+              ],
+              [
+                "Recorded PO value (EUR)",
+                "3100563.42"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "healthiest_synonym",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.79,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest financial risk: SUPP_00731 (53). SUPP_00731: 53; SUPP_00012: 54. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Financial_Health_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00731",
+                "53"
+              ],
+              [
+                "SUPP_00012",
+                "54"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "digital_synonym",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.98,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest cyber risk: SUPP_00450 (55). SUPP_00450: 55; SUPP_00731: 62. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Digital_Security_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00450",
+                "55"
+              ],
+              [
+                "SUPP_00731",
+                "62"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "single_credit",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.81,
+        "errors": [],
+        "tools": [
+          "compare"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "respond"
+        ],
+        "route_status": "grounded_route_repair",
+        "answer": "Lowest credit risk: SUPP_00450 (58). SUPP_00450: 58. Lower scores indicate lower risk.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Credit_Rating_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00450",
+                "58"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "non_braking_component",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 1.47,
+        "errors": [],
+        "tools": [
+          "component"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "component",
+          "respond"
+        ],
+        "route_status": "grounded_route_repair",
+        "answer": "Passenger doors \u2014 component-priority supplier screening (lower is better).\n\nStrategic Logistics 386 (SUPP_00731): 55.2/100. Continue component due diligence. Main weighted factors: Quality Risk 65, Safety Incident 51.\n\nPrecision Partners 464 (SUPP_00450): 59.4/100. Continue component due diligence. Main weighted factors: Quality Risk 67, Operational Resilience 68.\n\nQualification is unverified for every company. These illustrative weights screen supplier-level data; they do not prove that a company supplies this part. Review the required checks in each card.",
+        "tables": []
+      },
+      {
+        "case": "missing_real_identity",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.96,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "respond"
+        ],
+        "route_status": null,
+        "answer": "Please provide the real company name to research. Anonymous supplier IDs cannot establish company identity.",
+        "tables": []
+      },
+      {
+        "case": "new_research_company",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.82,
+        "errors": [],
+        "tools": [
+          "research"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "research",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Evaluation retrieval fixture; no live web claims.\nInsufficient evidence\n\nNot approval",
+        "tables": []
+      },
+      {
+        "case": "mixed_unknown_ids",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.62,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "respond"
+        ],
+        "route_status": null,
+        "answer": "Some supplier IDs were not found. Correct the IDs before continuing.",
+        "tables": []
+      },
+      {
+        "case": "safety_with_memo",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 1.17,
+        "errors": [],
+        "tools": [
+          "compare",
+          "memo"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "compare",
+          "memo",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "Lowest safety risk: SUPP_00450 (38). SUPP_00450: 38; SUPP_00731: 51. Lower scores indicate lower risk.\n\nI prepared a draft shortlist memo from the supplied dataset. It does not approve an award.",
+        "tables": [
+          {
+            "title": "Dataset comparison",
+            "columns": [
+              "Supplier",
+              "Safety_Incident_Score"
+            ],
+            "rows": [
+              [
+                "SUPP_00450",
+                "38"
+              ],
+              [
+                "SUPP_00731",
+                "51"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "case": "no_selected_greeting",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.0,
+        "errors": [],
+        "tools": [],
+        "graph_trace": [
+          "plan",
+          "respond"
+        ],
+        "route_status": null,
+        "answer": "Hi! I can compare suppliers, explain risk, research a real company, find alternatives or help prepare a negotiation. What are you sourcing?",
+        "tables": []
+      },
+      {
+        "case": "explicit_profile",
+        "step": 0,
+        "repeat": 1,
+        "seconds": 0.64,
+        "errors": [],
+        "tools": [
+          "profile"
+        ],
+        "graph_trace": [
+          "plan",
+          "validate",
+          "profile",
+          "respond"
+        ],
+        "route_status": "model_completed",
+        "answer": "I found SUPP_00450 in the supplied dataset. Here are the recorded metrics. Risk scores use 0\u2013100, lower is better; delivery rating is a performance percentage. These anonymized records do not identify a real company. Current financial statements or web research require its real company name. The dataset has no observation date, so these are not live financial conditions.",
+        "tables": [
+          {
+            "title": "Supplied supplier record",
+            "columns": [
+              "Metric",
+              "SUPP_00450"
+            ],
+            "rows": [
+              [
+                "Total risk",
+                "62"
+              ],
+              [
+                "Financial risk",
+                "65"
+              ],
+              [
+                "Credit risk",
+                "58"
+              ],
+              [
+                "Quality risk",
+                "67"
+              ],
+              [
+                "Operational risk",
+                "68"
+              ],
+              [
+                "Compliance risk",
+                "73"
+              ],
+              [
+                "Delivery rating (%)",
+                "86.06"
+              ],
+              [
+                "Recorded PO value (EUR)",
+                "3100563.42"
+              ]
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

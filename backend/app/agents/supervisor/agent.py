@@ -2,13 +2,22 @@
 import json
 import re
 import urllib.request
-from typing import Literal
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Literal, TypedDict, Any
+from langgraph.graph import StateGraph, START, END
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from app.config.settings import settings
 from app.services.component_risk import resolve_components
 
 class Action(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    @model_validator(mode="before")
+    @classmethod
+    def discard_unused_metric(cls, data):
+        # Only compare/filter execute this field. Never reinterpret an unknown
+        # metric for either of those tools; component weights come from its catalog.
+        if isinstance(data,dict) and data.get("tool") in {"profile","explain","component","research","alternatives","memo","commercial","sourcing"}:
+            data={**data};data.pop("metric",None)
+        return data
     tool: Literal["profile","compare","explain","filter","component","research","alternatives","memo","commercial","sourcing"]
     supplier_ids: list[str] = Field(default_factory=list,max_length=20)
     metric: Literal["total","financial","credit","quality","cyber","compliance","safety"] = "total"
@@ -56,25 +65,137 @@ def plan_request(message, selected, component, history):
              "messages":[{"role":"system","content":PROMPT+"\nSchema: "+json.dumps(Plan.model_json_schema())},
                          {"role":"user","content":json.dumps({"message":message,"selected_supplier_ids":selected,"component":component,"history":history})}]}
     if "nemotron" in settings.llm_model.lower():payload["chat_template_kwargs"]={"enable_thinking":False}
-    req=urllib.request.Request(settings.llm_base_url.rstrip("/")+"/chat/completions",data=json.dumps(payload).encode(),
-                               headers={"Authorization":"Bearer "+settings.llm_api_key,"Content-Type":"application/json"})
-    with urllib.request.urlopen(req,timeout=25) as response: data=json.load(response)
-    choice=data["choices"][0]
-    if choice.get("finish_reason")!="stop":raise ValueError("Incomplete plan")
-    return Plan.model_validate_json(choice["message"]["content"])
+    for attempt in range(2):
+        req=urllib.request.Request(settings.llm_base_url.rstrip("/")+"/chat/completions",data=json.dumps(payload).encode(),
+                                   headers={"Authorization":"Bearer "+settings.llm_api_key,"Content-Type":"application/json"})
+        with urllib.request.urlopen(req,timeout=25) as response: data=json.load(response)
+        choice=data["choices"][0]
+        try:
+            if choice.get("finish_reason")!="stop":raise ValueError("Incomplete plan")
+            plan=Plan.model_validate_json(choice["message"]["content"])
+            explicit_research=bool(re.match(r"\s*(?:please\s+)?research\s+\S+",message,re.I)) and not re.search(r"SUPP_",message,re.I)
+            if attempt==0 and explicit_research and not plan.actions:
+                raise ValueError("Use research for an explicitly named real company; ask only if its name is missing.")
+            return plan
+        except ValueError:
+            if attempt:raise
+            payload["messages"].append({"role":"user","content":"Replan the original request using the exact schema. Do not answer supplier facts yourself. Omit fields irrelevant to the tool (for component and research, omit metric). Use research when a real company is explicitly named. Return JSON only."})
 
 def basic(answer, **extra):
     return {"answer":answer,"components":[],"tool_calls":[],"validated":False,"agent_trace":[],"tables":[],"sources":[],**extra}
 
+class SupervisorState(TypedDict, total=False):
+    message: str
+    selected: list[str]
+    component: str | None
+    history: list[dict]
+    ids: list[str]
+    explicit_ids: list[str]
+    plan: Plan
+    supervisor_status: str
+    cursor: int
+    fallback: bool
+    outputs: list[dict[str,Any]]
+    result: dict | None
+    graph_trace: list[str]
+
 class SupervisorAgent:
     def __init__(self, tools, chat, research, scenarios, memos):
         self.tools,self.chat,self.research,self.scenarios,self.memos=tools,chat,research,scenarios,memos
+        self.graph=self._build_graph()
+
+    def _build_graph(self):
+        builder=StateGraph(SupervisorState)
+        builder.add_node("plan",self._plan_node)
+        builder.add_node("validate",self._validate_node)
+        builder.add_node("respond",self._respond_node)
+        builder.add_node("dataset_fallback",self._fallback_node)
+        builder.add_edge("dataset_fallback","respond")
+        tool_names=["profile","compare","explain","filter","component","research","alternatives","memo","commercial","sourcing"]
+        for name in tool_names:
+            builder.add_node(name,self._tool_node)
+            builder.add_conditional_edges(name,self._next_node,{n:n for n in [*tool_names,"respond"]})
+        builder.add_edge(START,"plan")
+        builder.add_conditional_edges("plan",lambda state:"respond" if state.get("result") else "dataset_fallback" if state.get("fallback") else "validate",{"respond":"respond","validate":"validate","dataset_fallback":"dataset_fallback"})
+        builder.add_conditional_edges("validate",self._next_node,{n:n for n in [*tool_names,"respond"]})
+        builder.add_edge("respond",END)
+        return builder.compile(name="railwise_supervisor")
 
     def answer(self,message,selected=None,component=None,history=None):
-        selected=selected or [];history=history or []
+        state=self.graph.invoke({"message":message,"selected":selected or [],"component":component,
+                                 "history":history or [],"cursor":0,"outputs":[],"graph_trace":[]},
+                                config={"recursion_limit":10})
+        return state["result"]
+
+    def _plan_node(self,state):
+        prepared=self._prepare(state["message"],state["selected"],state.get("component"),state["history"])
+        return {**(prepared if "plan" in prepared or prepared.get("fallback") else {"result":prepared}),"graph_trace":["plan"]}
+
+    def _fallback_node(self,state):
+        try:
+            result=self.chat.answer(state["message"],state["ids"],state.get("component"))
+        except Exception:
+            result=basic("The dataset service could not complete. Please retry.",status="unavailable")
+        result={**result,"agent_trace":[{"agent":"Dataset assistant","status":result.get("status","completed")}],"supervisor_status":"model_unavailable"}
+        return {"result":result,"graph_trace":[*state["graph_trace"],"dataset_fallback"]}
+
+    def _validate_node(self,state):
+        try:error=self._validate_plan(state)
+        except Exception:
+            error=basic("Supplier validation is unavailable. No planned tools were executed; please retry.",status="unavailable")
+        return {"result":error,"graph_trace":[*state["graph_trace"],"validate"]}
+
+    @staticmethod
+    def _next_node(state):
+        if state.get("result") or state["cursor"]>=len(state["plan"].actions):return "respond"
+        return state["plan"].actions[state["cursor"]].tool
+
+    def _tool_node(self,state):
+        action=state["plan"].actions[state["cursor"]]
+        try:
+            output=self.execute(action)
+            if not isinstance(output,dict) or not isinstance(output.get("answer"),str):raise ValueError("Invalid tool result")
+            record={"tool":action.tool,"output":output}
+        except Exception:
+            record={"tool":action.tool,"error":True}
+        return {"cursor":state["cursor"]+1,"outputs":[*state["outputs"],record],
+                "graph_trace":[*state["graph_trace"],action.tool]}
+
+    def _respond_node(self,state):
+        result=state.get("result")
+        if not result:
+            result=basic("",status="completed",supervisor_status=state["supervisor_status"])
+            answers=[];validations=[]
+            names={"profile":"Supplier record lookup","compare":"Dataset comparison","explain":"Risk explanation","filter":"Supplier search","component":"Component screening","research":"Research","alternatives":"Scenario alternatives","memo":"Memo","commercial":"Commercial preparation","sourcing":"Sourcing requirements"}
+            for record in state["outputs"]:
+                name=names[record["tool"]]
+                if record.get("error"):
+                    answers.append(f"{name} could not complete. No successful result is being claimed; please retry.")
+                    result["agent_trace"].append({"agent":name,"status":"failed"});validations.append(False)
+                    result["status"]="partial"
+                    continue
+                output=record["output"]
+                answers.append(output["answer"]);validations.append(output.get("validated") is True)
+                for key in ("components","tables","sources"):result[key].extend(output.get(key,[]))
+                for key in ("component_analysis","memo_html","navigate_to","research_id"):
+                    if key in output:result[key]=output[key]
+                result["tool_calls"].append(record["tool"])
+                result["agent_trace"].append({"agent":name,"status":output.get("status","completed")})
+                if result["status"]!="partial" and output.get("status") in {"clarification_required","insufficient_evidence","unavailable"}:result["status"]=output["status"]
+            result["answer"]="\n\n".join(answers)
+            result["validated"]=bool(validations) and all(validations)
+        result={**result,"orchestrator":"langgraph","graph_trace":[*state["graph_trace"],"respond"]}
+        return {"result":result}
+
+    def _prepare(self,message,selected=None,component=None,history=None):
+        selected=list(dict.fromkeys(i.strip().upper() for i in (selected or [])));history=history or []
         if re.fullmatch(r"\s*(hi|hello|hey|hello railwise|hi railwise|good morning|thanks|thank you)[!.\s]*",message,re.I):
             return basic("Hi! I can compare suppliers, explain risk, research a real company, find alternatives or help prepare a negotiation. What are you sourcing?",status="conversation",agent_trace=[{"agent":"Supervisor","status":"completed"}])
+        if re.match(r"\s*(?:please\s+)?(?:send|email|place|submit|award)\b",message,re.I):
+            return basic("I cannot send messages, place purchase orders or approve awards. I can prepare a draft memo or help review supplier evidence for an authorized buyer.",status="unsupported_action")
         explicit_ids=list(dict.fromkeys(re.findall(r"SUPP_\d{5}",message.upper())))
+        if len(explicit_ids)>20:
+            return basic("Select at most 20 suppliers.",status="clarification_required")
         # A supplier supplied in response to clarification is actionable even when
         # the planner repeats its previous question or the model is unavailable.
         remainder=re.sub(r"SUPP_\d{5}","",message,flags=re.I).strip()
@@ -83,17 +204,48 @@ class SupervisorAgent:
         try:plan=Plan(actions=[Action(tool="profile",supplier_ids=explicit_ids)]) if identity_reply else plan_request(message,selected,component,history)
         except Exception:
             plan=None
+        # Resolve an explicit metric follow-up from the most recent supplier context.
+        ids=explicit_ids or selected
+        if not ids and re.search(r"\b(their|them|those|these|that|again)\b",message,re.I):
+            for turn in reversed(history):
+                found=list(dict.fromkeys(re.findall(r"\bSUPP_\d{5}\b",turn["content"].upper())))
+                if found:
+                    ids=found;break
+        metrics=[m for m in ("financial","credit","quality","cyber","compliance","safety") if re.search(r"\b"+m+(r"(?:ly)?" if m=="financial" else r"(?:security)?" if m=="cyber" else "")+r"\b",message,re.I)]
+        factual=bool(re.search(r"\b(score|risk|compare|lowest|highest|safer|healthier|healthiest)\b",message,re.I))
+        repair=None
+        if ids and len(ids)<=20 and not re.search(r"\b(certified|approved|guaranteed|certification)\b",message,re.I):
+            matched_components=resolve_components(component or message)
+            if factual and len(matched_components)==1:
+                repair=Action(tool="component",supplier_ids=ids,component=matched_components[0])
+            elif re.search(r"\b(why|explain)\b",message,re.I) and len(ids)==1 and not resolve_components(message):
+                repair=Action(tool="explain",supplier_ids=ids)
+            elif factual and len(metrics)==1 and not resolve_components(message):
+                repair=Action(tool="compare",supplier_ids=ids,metric=metrics[0],order="desc" if re.search(r"\b(highest|worst|most)\b",message,re.I) else "asc")
+        repaired=False
+        if repair and (plan is None or not plan.actions or all(a.tool=="profile" for a in plan.actions)):
+            plan=Plan(actions=[repair]);repaired=True
         if plan is None:
-            if component or resolve_components(message) or re.search(r"\b(compare|risk|explain|lowest|highest|financial|quality|credit|certified|certification|iso|approved|price|cheapest|capacity|manufactures|guarantee|guaranteed)\b",message,re.I):
-                result=self.chat.answer(message,selected,component)
-                return {**result,"agent_trace":[{"agent":"Dataset assistant","status":"completed"}],"supervisor_status":"model_unavailable"}
+            if component or resolve_components(message) or (ids and re.search(r"\b(compare|risk|explain|lowest|highest|financial|quality|credit|certified|certification|iso|approved|price|cheapest|capacity|manufactures|guarantee|guaranteed)\b",message,re.I)):
+                return {"fallback":True,"ids":ids}
             return basic("The conversational model is unavailable right now. I can still compare supplier risk or explain a supplier ID. Please retry for research or a conversational follow-up.",status="unavailable",supervisor_status="model_unavailable")
         if not plan.actions and explicit_ids and re.search(r"\b(risk|financial|profile|details|score|research)\b",message,re.I):
             plan=Plan(actions=[Action(tool="profile",supplier_ids=explicit_ids)])
+        if not plan.actions and re.search(r"\b(negotiate|negotiation)\b",message,re.I) and re.search(r"\b(help|prepare|price|suppliers)\b",message,re.I):
+            plan=Plan(actions=[Action(tool="commercial")])
         if not plan.actions:
+            if re.search(r"\bSUPP_\d{5}\b",plan.reply,re.I):
+                return basic("I could not ground that supplier-specific answer in a tool result. Please specify the supplier IDs and risk metric to check.",status="clarification_required")
             # Conversational text is not presented as evidence-validated.
-            return basic(plan.reply or "What company, supplier IDs or component would you like to investigate?",status="conversation",
+            return basic(plan.reply or "What company, supplier IDs or component would you like to investigate?",status="clarification_required" if "?" in plan.reply else "conversation",
                          agent_trace=[{"agent":"Supervisor","status":"responded · no tools run"}],supervisor_status="model_completed")
+        return {"plan":plan,"selected":selected,"ids":ids,"explicit_ids":explicit_ids,
+                "supervisor_status":"deterministic_lookup" if identity_reply else "grounded_route_repair" if repaired else "model_completed"}
+
+    def _validate_plan(self,state):
+        message,history=state["message"],state["history"]
+        selected,ids,explicit_ids=state["selected"],state["ids"],state["explicit_ids"]
+        plan=state["plan"]
         context=message+"\n"+"\n".join(h["content"] for h in history if h["role"]=="user")
         allowed=set(selected)|set(re.findall(r"SUPP_\d{5}",(message+"\n"+"\n".join(h["content"] for h in history)).upper()))
         actions=plan.actions
@@ -101,8 +253,16 @@ class SupervisorAgent:
         if sum(a.tool=="research" for a in actions)>1:
             return basic("Please research one real company at a time.",status="clarification_required")
         for a in actions:
+            a.supplier_ids=list(dict.fromkeys(i.strip().upper() for i in a.supplier_ids))
+            if a.tool=="compare":
+                # All available metrics are risk scores: healthier/safer means lower.
+                # Default comparisons are ascending; the model cannot invert this.
+                a.order="desc" if re.search(r"\b(highest|worst|largest)\b|most\s+(?:\w+\s+)?risk",message,re.I) else "asc"
+
+            if a.tool=="filter" and (a.metric!="total" or (a.min_risk is not None and a.max_risk is not None and a.min_risk>a.max_risk)):
+                return basic("Portfolio filters require total risk and a minimum no greater than the maximum. Please correct the range.",status="clarification_required")
             if a.tool in {"profile","compare","explain","component","alternatives","memo"}:
-                if not a.supplier_ids:a.supplier_ids=list(dict.fromkeys(selected))
+                if not a.supplier_ids:a.supplier_ids=list(dict.fromkeys(explicit_ids or selected or ids))
                 if not a.supplier_ids or set(a.supplier_ids)-allowed:
                     return basic("Which supplier IDs should I use? Select suppliers or include their IDs in your message.",status="clarification_required")
                 rows=self.tools.get_suppliers(a.supplier_ids)
@@ -110,28 +270,9 @@ class SupervisorAgent:
                     return basic("Some supplier IDs were not found. Correct the IDs before continuing.",status="clarification_required")
                 if a.tool in {"explain","alternatives"} and len(a.supplier_ids)!=1:
                     return basic("Which single supplier should I investigate?",status="clarification_required")
-            if a.tool=="research" and (len(a.company.strip())<2 or re.search(r"SUPP_\d{5}",a.company,re.I) or a.company.casefold() not in context.casefold()):
+            if a.tool=="research" and (len(a.company.strip())<2 or set(re.findall(r"[a-z]+",a.company.lower())) <= {"research","the","this","that","top","best","selected","a","an","supplier","company","vendor","manufacturer","its","financial","conditions"} or re.fullmatch(r"(?:(?:the|this|that|top|best|selected|a|an)\s+)*(?:supplier|company|vendor|manufacturer)(?:\s+and.*)?",a.company.strip(),re.I) or re.search(r"SUPP_\d{5}",a.company,re.I) or a.company.casefold() not in context.casefold()):
                 return basic("Please provide the real company name to research. Anonymous supplier IDs cannot establish company identity.",status="clarification_required")
-        result=basic("",status="completed",supervisor_status="deterministic_lookup" if identity_reply else "model_completed")
-        answers=[]
-        for a in actions:
-            name={"profile":"Supplier record lookup","compare":"Dataset comparison","explain":"Risk explanation","filter":"Supplier search","component":"Component screening","research":"Research","alternatives":"Scenario alternatives","memo":"Memo","commercial":"Commercial preparation","sourcing":"Sourcing requirements"}[a.tool]
-            try:
-                output=self.execute(a)
-                answers.append(output["answer"])
-                result["components"].extend(output.get("components",[]))
-                result["tables"].extend(output.get("tables",[]))
-                result["sources"].extend(output.get("sources",[]))
-                for key in ("component_analysis","memo_html","navigate_to","research_id"):
-                    if key in output:result[key]=output[key]
-                result["tool_calls"].append(a.tool)
-                result["agent_trace"].append({"agent":name,"status":"completed"})
-            except Exception:
-                answers.append(f"{name} could not complete. No successful result is being claimed; please retry.")
-                result["agent_trace"].append({"agent":name,"status":"failed"})
-                result["status"]="partial"
-        result["answer"]="\n\n".join(answers)
-        return result
+        return None
 
     def execute(self,a):
         if a.tool=="profile":

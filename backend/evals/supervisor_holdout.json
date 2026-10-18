@@ -1,0 +1,12 @@
+[
+ {"id":"healthiest_synonym","message":"Between SUPP_00012 and SUPP_00731, which is financially healthier?","tools":["compare"],"metric":"Financial_Health_Score","ids":["SUPP_00012","SUPP_00731"]},
+ {"id":"digital_synonym","message":"Compare cybersecurity risk: SUPP_00450 and SUPP_00731","tools":["compare"],"metric":"Digital_Security_Score","ids":["SUPP_00450","SUPP_00731"]},
+ {"id":"single_credit","message":"What is SUPP_00450's credit risk score?","tools":["compare"],"metric":"Credit_Rating_Score","ids":["SUPP_00450"]},
+ {"id":"non_braking_component","message":"Compare doors risk for SUPP_00450 and SUPP_00731","tools":["component"]},
+ {"id":"missing_real_identity","message":"Research this company","tools":[],"status":"clarification_required"},
+ {"id":"new_research_company","message":"Research Alstom","tools":["research"],"company":"Alstom"},
+ {"id":"mixed_unknown_ids","message":"Compare quality risk for SUPP_00012 and SUPP_99999","tools":[],"status":"clarification_required"},
+ {"id":"safety_with_memo","message":"Compare safety risk of SUPP_00450 and SUPP_00731 and draft a memo","tools":["compare","memo"],"metric":"Safety_Incident_Score","ids":["SUPP_00450","SUPP_00731"]},
+ {"id":"no_selected_greeting","message":"hello","tools":[]},
+ {"id":"explicit_profile","message":"Show the profile of SUPP_00450","tools":["profile"]}
+]

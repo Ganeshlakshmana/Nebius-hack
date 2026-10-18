@@ -1,6 +1,8 @@
 "use client";
 import {Button} from "@/components/ui/button";
 export type ChatArtifactData={
+ orchestrator?:string;
+ graph_trace?:string[];
  agent_trace?:{agent:string;status:string}[];
  tables?:{title:string;columns:string[];rows:string[][]}[];
  sources?:{label:string;url:string}[];
@@ -11,6 +13,7 @@ export type ChatArtifactData={
 export function ChatArtifacts({data,onNavigate}:{data:ChatArtifactData;onNavigate:(view:string)=>void}){
  function downloadMemo(){if(!data.memo_html)return;const url=URL.createObjectURL(new Blob([data.memo_html],{type:"text/html"}));const a=document.createElement("a");a.href=url;a.download="railwise-shortlist-memo.html";a.click();URL.revokeObjectURL(url)}
  return <div className="chat-artifacts">
+ {data.orchestrator==="langgraph"&&<details><summary>LangGraph execution path</summary><p>{data.graph_trace?.join(" → ")}</p></details>}
  {data.agent_trace?.length? <div className="chat-agent-trace" aria-label="Agents used">{data.agent_trace.map((a,i)=><span key={i}>{a.agent} · {a.status}</span>)}</div>:null}
  {data.supervisor_status==="model_unavailable"&&<small>Conversational model unavailable · limited dataset fallback</small>}
  {data.tables?.map((table,i)=><div className="table-scroll" key={i}><strong>{table.title}</strong><table><thead><tr>{table.columns.map((c,j)=><th key={j}>{c}</th>)}</tr></thead><tbody>{table.rows.map((row,j)=><tr key={j}>{row.map((cell,k)=><td key={k}>{cell}</td>)}</tr>)}</tbody></table></div>)}
