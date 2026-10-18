@@ -1,7 +1,7 @@
 # Memo agent - Evals
 
 _Code: `agents/memos/agent.py`_  
-_Status: Implemented (HTML memo). Narrative text generation is not LLM-based yet._
+_Status: Implemented (HTML memo with input validation). Narrative text generation is not LLM-based yet._
 
 How we measure whether the agent is right. Run existing tests with `python -m pytest backend/tests -q`.
 
@@ -9,13 +9,11 @@ How we measure whether the agent is right. Run existing tests with `python -m py
 
 | Test | Verifies |
 |---|---|
-| None yet | `/memos/shortlist` has no automated test |
+| `tests/test_guardrails.py::test_memo_escapes_input_and_rejects_bad_ids` | `<script>` escaped; simulated-data note present; unknown ID, wrong `chosen`, 0/21 IDs, long note -> 422 |
 
 ## Planned evals
 
-- XSS test: `<script>` in `note`/`chosen` appears escaped.
 - Fidelity test: every number in the memo table equals the dataset value.
-- Boundary tests: 0 and 21 IDs -> 422; unknown ID -> 422 (after fix).
 - Snapshot test of the memo structure (sections present, simulated-data disclaimer present).
 
 ## Targets

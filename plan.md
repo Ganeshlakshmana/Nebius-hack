@@ -116,18 +116,18 @@ The running backend (`backend/app/agents/`) differs from the table above. There 
 
 | Agent | Code | State | Key limitation |
 |-------|------|-------|----------------|
-| Chat | `agents/chat/` | Deterministic, grounded router over data tools + component screening | No LLM phrasing or validator yet |
-| Live Orders | `agents/live_orders/` | One seeded simulated scenario, `simulated_feed` label | No continuous feed, no alert dedupe |
-| News | `agents/news/` | Source-linked search when a real company name is given | No triage; all signals `unreviewed` |
+| Chat | `agents/chat/` | Deterministic, grounded router over data tools + component screening, supplier-ID validator | No LLM phrasing; numeric validator waits for the LLM step |
+| Live Orders | `agents/live_orders/` | One seeded simulated scenario, `simulated_feed` label, open-alert dedupe | No continuous feed |
+| News | `agents/news/` | Source-linked search when a real company name is given; query terms cleaned, snippet HTML stripped | No triage; all signals `unreviewed` |
 | Research | `agents/research/` | Budgeted (≤15) multi-dimension search, component-aware | No extract/triage/synthesis; `status: partial` |
-| Scenarios | `agents/scenarios/` | Nearest-profile alternatives with open-alert flag | No component filter |
-| Memos | `agents/memos/` | Escaped HTML shortlist memo | Not PDF; unknown IDs silently dropped |
+| Scenarios | `agents/scenarios/` | Nearest-profile alternatives with open-alert flag and `exclude_alerted` option | No component filter |
+| Memos | `agents/memos/` | Escaped HTML shortlist memo; rejects unknown IDs and a `chosen` outside the shortlist | Not PDF |
 
 The "Historical Scoring Agent" role is covered by services (`services/explainer.py` recovers TRI weights, R² ≈ 0.998; `services/data_tools.py`), not a separate agent.
 
 #### 4.2 Agent documentation (context, intent, guidelines, guardrails, evals)
 
-Each agent folder holds `CONTEXT.md`, `INTENT.md`, `GUIDELINES.md`, `GUARDRAILS.md` and `EVALS.md`. Cross-agent rules are in `backend/app/agents/SHARED_GUARDRAILS.md`, and the index is `backend/app/agents/README.md`. Section 12 of `backend/ARCHITECTURE.md` summarises them. These files are part of the definition of done for any agent change.
+Each agent folder holds `CONTEXT.md`, `INTENT.md`, `GUIDELINES.md`, `GUARDRAILS.md` and `EVALS.md`. Each folder is self-contained: platform-wide principles, the change checklist and the platform guardrails that apply to that agent are repeated inside its own `GUIDELINES.md` and `GUARDRAILS.md`. The index is `backend/app/agents/README.md`. Section 12 of `backend/ARCHITECTURE.md` summarises them. These files are part of the definition of done for any agent change.
 
 ---
 
@@ -204,7 +204,7 @@ Each agent folder holds `CONTEXT.md`, `INTENT.md`, `GUIDELINES.md`, `GUARDRAILS.
 | 0 – Foundation | Done: dataset loaded read-only in DuckDB, TRI weights recovered, Next.js table + filters |
 | 1 – Core agents & comparison | Mostly done: compare (≤20), explanations, grounded chat, component screening, simulated ops. News triage not done |
 | 2 – Research & wow features | Partial: research search + scenario alternatives + HTML memo + SSE event stream. No deep-dive loop, no PDF, no LLM |
-| 3 – Hardening | Partial: audit log, FastAPI, 10 passing tests, agent guardrail/eval docs. No LangSmith, Docker or CI |
+| 3 – Hardening | Partial: audit log, FastAPI, 18 passing tests (including one test per new guardrail), per-agent guardrail/eval docs. No LangSmith, Docker or CI |
 | 4 – Production | Not started |
 
 **Phase 4 – Production Path (Post-Challenge)**
@@ -224,7 +224,7 @@ Each agent folder holds `CONTEXT.md`, `INTENT.md`, `GUIDELINES.md`, `GUARDRAILS.
 - **Data Versioning**: Historic scores are immutable; new scores create new versions
 - **Human Oversight**: Critical score changes or research reports can require approval
 - **Testing Strategy**: Unit tests for scoring logic, integration tests for agent graphs, evaluation datasets for chatbot & research quality. Per-agent eval plans and targets are in each agent's `EVALS.md`
-- **Guardrails**: Every agent documents its hard limits in `GUARDRAILS.md`, marked Implemented or Planned. Open gaps are user authentication, rate limiting, the chat numeric validator, prompt-injection isolation and memo ID validation
+- **Guardrails**: Every agent documents its hard limits in `GUARDRAILS.md`, marked Implemented or Planned. Open gaps are user authentication, rate limiting, the chat numeric validator and prompt-injection isolation (both wait for the LLM step)
 - **Security & Compliance**: No PII in logs, API key management via secrets, audit trail for all decisions
 - **Extensibility Points**:
   - New risk dimensions → just extend the scoring module
@@ -253,6 +253,6 @@ Phases 0–1 are built (see progress table in Section 7). Next, in priority orde
 2. Choose the LLM provider; add LLM phrasing to the Chat agent behind the numeric validator (chat `GUARDRAILS.md`)
 3. Build the 30-question golden eval set and run it in CI (chat `EVALS.md`)
 4. Add news/research triage with corroboration rules for red flags
-5. Fix memo ID validation and add memo/news tests (the two agents with no direct tests)
+5. Add a stubbed-gateway budget test for research and a dataset-hash test for live orders (see each agent's `EVALS.md`)
 6. Wire the frontend supplier table to `GET /suppliers` instead of static `public/suppliers.json`
 7. Add authentication and rate limiting before any non-local deployment

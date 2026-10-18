@@ -48,6 +48,13 @@ class LiveOrdersAgent:
             supplier_id = row["supplierID"]
         if not row:
             raise KeyError(supplier_id)
+        # Dedupe: one open simulated alert per supplier and metric.
+        with self.store.connect() as db:
+            existing = db.execute("SELECT * FROM ops_alerts WHERE supplier_id=? AND metric='delivery_rating' "
+                                  "AND status='open' AND source='simulated_feed'", (supplier_id,)).fetchone()
+        if existing:
+            self.running = True
+            return {**dict(existing), "deduplicated": True}
         baseline = float(row["Supplier Delivery Rating"])
         current = round(max(5.0, baseline * 0.72), 2)
         multiplier = 1.6 if row["Sourcing Risk Level"] == "High" else 1.25

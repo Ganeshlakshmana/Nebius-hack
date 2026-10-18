@@ -12,6 +12,13 @@ class CompareRequest(BaseModel):
 class WhatIfRequest(BaseModel):
     supplier_id: str
     limit: int = Field(default=5, ge=1, le=20)
+    exclude_alerted: bool = False
+
+
+class MemoRequest(BaseModel):
+    ids: list[str] = Field(min_length=1, max_length=20)
+    chosen: str | None = Field(default=None, max_length=20)
+    note: str = Field(default="", max_length=2000)
 
 
 class ResearchRequest(BaseModel):

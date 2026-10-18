@@ -1,7 +1,7 @@
 # Chat agent - Intent
 
 _Code: `agents/chat/agent.py`, `services/component_risk.py`, `services/data_tools.py`_  
-_Status: Implemented. Deterministic router (no LLM call yet); LLM phrasing is the planned next step._
+_Status: Implemented. Deterministic router with a supplier-ID validator (no LLM call yet); LLM phrasing is the planned next step._
 
 Why the agent exists and what 'good' looks like.
 

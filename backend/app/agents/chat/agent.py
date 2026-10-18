@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 from app.services.data_tools import DataTools
 from app.services.component_risk import ComponentRisk, resolve_components
@@ -11,6 +12,20 @@ class ChatAgent:
         self.tools = tools
 
     def answer(self, message: str, shortlist: list[str] | None = None, component: str | None = None) -> dict:
+        result = self._route(message, shortlist, component)
+        unsupported = self.unsupported_ids(result)
+        if unsupported:
+            result["validated"] = False
+            result["validation_errors"] = [f"Supplier ID not present in tool output: {i}" for i in unsupported]
+        return result
+
+    @staticmethod
+    def unsupported_ids(result: dict) -> list[str]:
+        """Validator: every supplier ID named in the answer must appear in this turn's tool output."""
+        evidence = json.dumps({k: v for k, v in result.items() if k != "answer"}, default=str)
+        return sorted({i for i in re.findall(r"SUPP_\d{5}", result.get("answer", "")) if i not in evidence})
+
+    def _route(self, message: str, shortlist: list[str] | None = None, component: str | None = None) -> dict:
         ids = list(dict.fromkeys(re.findall(r"SUPP_\d{5}", message.upper())))
         if not ids:
             ids = list(dict.fromkeys(shortlist or []))

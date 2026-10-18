@@ -11,11 +11,12 @@ How we measure whether the agent is right. Run existing tests with `python -m py
 |---|---|
 | `tests/test_components.py::test_component_research_queries` | Component research adds component-specific queries, `component_qualification: unverified`, and an empty scorecard |
 | `tests/test_api.py::test_simulated_ops_and_agent_handoffs` | Alert-triggered research returns `status: partial` |
+| `tests/test_guardrails.py::test_research_rejects_company_name_empty_after_cleaning` | Name cleaned, empty name -> 422, <= 15 searches, every timeline item has a URL |
 
 ## Planned evals
 
-- Budget test: never more than 15 searches, even with a component.
-- Citation test: every timeline entry has a unique URL that was returned by the gateway.
+- Budget test with a stubbed gateway that always returns results: never more than 15 searches.
+- Citation test: every timeline URL was returned by the gateway in this run.
 - Offline test: no network call; `limitations` explains how to enable live research.
 - Quality set (once triage exists): 10 known companies with human-written reference findings; score recall of red flags and citation validity.
 

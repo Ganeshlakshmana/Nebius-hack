@@ -4,7 +4,7 @@ import json
 
 from app.config.settings import settings
 from app.db.sqlite_store import AppStore
-from app.services.search_gateway import SearchGateway
+from app.services.search_gateway import SearchGateway, clean_search_term
 
 
 class NewsAgent:
@@ -13,6 +13,7 @@ class NewsAgent:
 
     def check(self, supplier_id: str, company: str | None = None) -> dict:
         # An anonymised ID is not treated as a real company name.
+        company = clean_search_term(company) if company else None
         query_target = company or supplier_id
         items = self.search.search(f'"{query_target}" recent supplier risk news', max_results=5) if company else []
         signals = [{"dimension": "unclassified", "severity": "low", "summary": item["title"],

@@ -9,11 +9,11 @@ How we measure whether the agent is right. Run existing tests with `python -m py
 
 | Test | Verifies |
 |---|---|
-| None yet | The news agent runs inside `test_simulated_ops_and_agent_handoffs`, but its output is not asserted |
+| `tests/test_guardrails.py::test_news_offline_returns_status_not_findings` | Offline: empty signals, a status and limitations; unknown supplier -> 404 |
+| `tests/test_guardrails.py::test_search_terms_and_snippets_are_sanitised` | Quotes/control characters removed, 200-char cap, HTML stripped |
 
 ## Planned evals
 
-- Offline contract test: `GET /signals/{id}` returns `provider_not_configured`, empty `signals`, and a limitation.
 - Gateway test with a stubbed Tavily response: results without URLs are dropped; cache hit avoids a second call.
 - Triage set (once built): 50 labelled snippets, target >= 85% dimension accuracy and no red flag from a single weak source.
 - Injection set: snippet text containing instructions must not alter output fields.

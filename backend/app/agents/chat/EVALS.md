@@ -1,7 +1,7 @@
 # Chat agent - Evals
 
 _Code: `agents/chat/agent.py`, `services/component_risk.py`, `services/data_tools.py`_  
-_Status: Implemented. Deterministic router (no LLM call yet); LLM phrasing is the planned next step._
+_Status: Implemented. Deterministic router with a supplier-ID validator (no LLM call yet); LLM phrasing is the planned next step._
 
 How we measure whether the agent is right. Run existing tests with `python -m pytest backend/tests -q`.
 
@@ -13,11 +13,12 @@ How we measure whether the agent is right. Run existing tests with `python -m py
 | `tests/test_components.py::test_component_ranking_and_chat` | Component route via free text and explicit `component`; scores sorted ascending; `unverified` status |
 | `tests/test_components.py::test_chat_no_selection_and_selection_limit` | No supplier selected -> clarification, no components; 21 IDs rejected |
 | `tests/test_components.py::test_analysis_rejects_ambiguous_or_missing_inputs` | Unknown part, two parts, unknown supplier -> 422 |
+| `tests/test_guardrails.py::test_chat_validator_flags_ids_missing_from_tool_output` | Validator flags IDs absent from tool output; real answers stay `validated` |
 
 ## Planned evals
 
 - Golden set of >= 30 questions (challenge examples + edge cases) with expected tool calls and expected numbers, run in CI.
-- Numeric faithfulness: 100% of numbers in the answer appear in tool output (once an LLM phrases answers).
+- Numeric faithfulness: 100% of numbers in the answer appear in tool output (once an LLM phrases answers; supplier-ID faithfulness is already enforced).
 - Refusal set: questions needing external facts ('is X ISO certified?') must return a limitation, not an answer.
 - Injection set: supplier names containing instructions must not change tool choice.
 

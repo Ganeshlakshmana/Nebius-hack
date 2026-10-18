@@ -1,7 +1,7 @@
 # Memo agent - Intent
 
 _Code: `agents/memos/agent.py`_  
-_Status: Implemented (HTML memo). Narrative text generation is not LLM-based yet._
+_Status: Implemented (HTML memo with input validation). Narrative text generation is not LLM-based yet._
 
 Why the agent exists and what 'good' looks like.
 

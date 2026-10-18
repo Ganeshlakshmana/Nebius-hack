@@ -19,7 +19,7 @@ from app.agents.scenarios.agent import ScenarioAgent
 from app.config.settings import settings
 from app.db.duckdb_store import SupplierStore
 from app.db.sqlite_store import AppStore
-from app.models.schemas import ChatRequest, CompareRequest, ResearchRequest, ScenarioRequest, WhatIfRequest
+from app.models.schemas import ChatRequest, CompareRequest, MemoRequest, ResearchRequest, ScenarioRequest, WhatIfRequest
 from app.services.data_tools import DataTools
 from app.services.events import AgentBus, EventBus
 from app.services.explainer import ScoreExplainer
@@ -284,7 +284,7 @@ def chat(request: ChatRequest) -> dict:
     return result
 
 
-@app.get("/components")
+@app.get("/components/catalog")
 def components() -> dict:
     return {"items": catalog(), "weights_source": "Illustrative application defaults; not Siemens-approved"}
 
@@ -300,7 +300,10 @@ def component_analysis(request: ComponentAnalysisRequest) -> dict:
 
 @app.post("/research")
 async def start_research(request: ResearchRequest) -> dict:
-    report = app.state.research.run(request.company, request.supplier_id, component=request.component)
+    try:
+        report = app.state.research.run(request.company, request.supplier_id, component=request.component)
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from None
     app.state.bus.send("research", "news", "research_started", {"research_id": report["research_id"], "company": request.company})
     return {"research_id": report["research_id"], "status": report["status"]}
 
@@ -322,18 +325,19 @@ def signals(supplier_id: str) -> dict:
 
 @app.post("/scenarios/what-if")
 def what_if(request: WhatIfRequest) -> dict:
-    result = app.state.scenarios.what_if(request.supplier_id, request.limit)
+    result = app.state.scenarios.what_if(request.supplier_id, request.limit, request.exclude_alerted)
     if result.get("error"):
         raise HTTPException(404, result["error"])
     return result
 
 
 @app.post("/memos/shortlist")
-def memo(body: dict[str, Any]) -> StreamingResponse:
-    ids = body.get("ids", [])
-    if not isinstance(ids, list) or not ids or len(ids) > 20:
-        raise HTTPException(422, "Provide between 1 and 20 supplier IDs")
-    document = app.state.memos.build_html(ids, body.get("chosen"), str(body.get("note", "")))
+def memo(request: MemoRequest) -> StreamingResponse:
+    try:
+        document = app.state.memos.build_html(request.ids, request.chosen, request.note)
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from None
+    app.state.store.audit("memos", "memo_generated", {"ids": request.ids, "chosen": request.chosen})
     return StreamingResponse(iter([document]), media_type="text/html; charset=utf-8",
                              headers={"Content-Disposition": "attachment; filename=shortlist-memo.html"})
 

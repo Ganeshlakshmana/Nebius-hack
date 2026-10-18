@@ -10,13 +10,12 @@ How we measure whether the agent is right. Run existing tests with `python -m py
 | Test | Verifies |
 |---|---|
 | `tests/test_api.py::test_simulated_ops_and_agent_handoffs` | Alternatives list is non-empty after the demo scenario |
+| `tests/test_guardrails.py::test_scenarios_exclude_alerted_and_never_return_source` | Source excluded, `limit` honoured, sorted by distance, `exclude_alerted` works, unknown ID -> 404 |
 
 ## Planned evals
 
 - Determinism: same input -> same ordered list.
-- Exclusion: the source ID never appears; results length == `limit` (or fewer only when data is short).
 - Alert flag: after starting the demo scenario, the affected supplier is flagged when it appears as a candidate.
-- Monotonic check: sorted by non-decreasing `profile_distance`.
 
 ## Targets
 

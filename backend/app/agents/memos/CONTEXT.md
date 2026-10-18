@@ -1,7 +1,7 @@
 # Memo agent - Context
 
 _Code: `agents/memos/agent.py`_  
-_Status: Implemented (HTML memo). Narrative text generation is not LLM-based yet._
+_Status: Implemented (HTML memo with input validation). Narrative text generation is not LLM-based yet._
 
 What the agent knows, reads and is wired to.
 

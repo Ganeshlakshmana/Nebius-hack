@@ -5,7 +5,7 @@ import uuid
 from app.config.settings import settings
 from app.db.sqlite_store import AppStore
 from app.services.events import AgentBus
-from app.services.search_gateway import SearchGateway
+from app.services.search_gateway import SearchGateway, clean_search_term
 
 
 class ResearchAgent:
@@ -14,6 +14,10 @@ class ResearchAgent:
         self.store, self.bus, self.search = store, bus, search
 
     def run(self, company: str, supplier_id: str | None = None, triggering_alert: str | None = None, component: str | None = None) -> dict:
+        company = clean_search_term(company)
+        component = clean_search_term(component, 100) if component else None
+        if len(company) < 2:
+            raise ValueError("Company name must contain at least 2 characters after cleaning")
         research_id = str(uuid.uuid4())
         dimensions = ["financial health and credit", "compliance and governance", "quality and safety",
                       "labor stability", "ESG", "digital security", "geopolitical and political exposure"]

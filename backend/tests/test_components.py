@@ -67,3 +67,15 @@ def test_component_research_queries(monkeypatch):
         assert report['component_qualification']=='unverified'
         assert any('brake pads' in q and 'certification' in q for q in queries)
         assert report['scorecard']=={}
+
+
+def test_component_routes_are_distinct():
+    with TestClient(app) as client:
+        catalog_items = client.get('/components/catalog').json()['items']
+        assert {item['id'] for item in catalog_items} >= {'braking', 'traction'}
+        overlay = client.get('/components', params={'limit': 5}).json()
+        assert overlay['source'] == 'simulated_component_dataset'
+        assert len(overlay['items']) == 5
+        risk = client.get('/suppliers/SUPP_00018/component-risk')
+        assert risk.status_code == 200
+        assert client.get('/suppliers/SUPP_99999/component-risk').status_code == 404

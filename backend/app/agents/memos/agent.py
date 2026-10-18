@@ -10,7 +10,14 @@ class MemoAgent:
         self.tools = tools
 
     def build_html(self, ids: list[str], chosen: str | None = None, note: str = "") -> str:
+        ids = list(dict.fromkeys(i.strip().upper() for i in ids))
         rows = self.tools.get_suppliers(ids)
+        # Refuse a partial memo: every requested supplier must exist in the dataset.
+        missing = sorted(set(ids) - {r["supplierID"] for r in rows})
+        if missing:
+            raise ValueError(f"Unknown supplier IDs: {', '.join(missing)}")
+        if chosen and chosen.strip().upper() not in ids:
+            raise ValueError("The chosen supplier must be one of the shortlisted IDs")
         table_rows = "".join(f"<tr><td>{html.escape(str(r['supplierID']))}</td><td>{html.escape(str(r['Supplier Name']))}</td>"
             f"<td>{float(r['Total_Risk_Index']):.1f}</td><td>{html.escape(str(r['Sourcing Risk Level']))}</td>"
             f"<td>{float(r['Purchase Order Volume (EUR)']):,.2f}</td></tr>" for r in rows)

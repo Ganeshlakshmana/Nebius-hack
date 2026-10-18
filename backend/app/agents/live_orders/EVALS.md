@@ -10,13 +10,14 @@ How we measure whether the agent is right. Run existing tests with `python -m py
 | Test | Verifies |
 |---|---|
 | `tests/test_api.py::test_simulated_ops_and_agent_handoffs` | Scenario returns `simulated_feed`, creates an alert for the requested supplier, and status rows are labelled |
+| `tests/test_guardrails.py::test_live_orders_dedupes_open_alerts_and_reset_clears_overlay` | Second start reuses the open alert; reset clears simulated alerts; dataset row untouched |
 
 ## Planned evals
 
 - Property test: after `reset`, no `simulated_feed` rows remain and dataset values are byte-identical.
 - Severity boundary tests around EUR 250,000 and each sourcing multiplier.
 - Drift test: z-score sign and magnitude for several suppliers.
-- Dedupe test once alert dedupe exists.
+- Property test: dataset file hash unchanged after a full start/reset cycle.
 
 ## Targets
 
