@@ -35,3 +35,6 @@ Hard limits and safety controls. 'Planned' and 'Gap' items are not enforced yet.
 
 ## Trust update
 Unknown IDs never produce partial chat rankings. Research/news severity is `unassessed`; uncalibrated numeric research confidence is omitted (`null`). Research uses bounded keyword-triggered follow-up and up to three page extractions; potential concerns are not verified findings. See `docs/challenge-readiness.md` for limits.
+
+## Evidence triage update
+`services/research_evidence.py` classifies policy/process, negated/conditional, reported-incident candidates, ambiguous mentions and unresolved identity. Buyer-supplied domains use exact/subdomain boundaries and are not independently verified. Publication dates are labelled recent/historical/unknown/future. Decision actions cite evidence IDs and never approve suppliers. Tests: `tests/test_research_evidence.py`. Arbitrary component names are accepted; no component qualification is inferred from web text.

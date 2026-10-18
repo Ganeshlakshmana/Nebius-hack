@@ -22,7 +22,7 @@ Run from the repository root:
 OFFLINE_MODE=true backend/.venv/bin/python -m pytest backend/tests -q
 ```
 
-41 regression cases passed locally. Includes challenge answers, six metric routes, unknown IDs, unsupported certification/price/capacity claims, missing scores, tied ranks, normalization, component sensitivity, follow-up research, anonymous identities, limits, escaping and simulated-feed behavior. CI runs offline; tests do not establish real-world supplier suitability or open-ended language coverage.
+68 regression cases passed locally. Includes challenge answers, six metric routes, unknown IDs, unsupported certification/price/capacity claims, missing scores, tied ranks, normalization, component sensitivity, follow-up research, anonymous identities, limits, escaping and simulated-feed behavior. CI runs offline; tests do not establish real-world supplier suitability or open-ended language coverage.
 
 Live smoke check: Knorr-Bremse / braking systems returned 19 sources, 7 searches, one extraction request and one follow-up round. This is an execution check, not a verified risk assessment.
 
@@ -33,3 +33,6 @@ Live smoke check: Knorr-Bremse / braking systems returned 19 sources, 7 searches
 4. Ask for braking risk; show critical factors and decision-readiness checks.
 5. Research a real company, open a source and inspect the follow-up trail.
 6. Export the evidence report and shortlist memo.
+
+## Research evidence update
+Optional buyer-supplied official domain, conservative incident-vs-policy triage, freshness labels, citation-linked decision actions and decision-packet export now implemented. Domain matches are anchors, not legal-entity verification. No model-based semantic understanding or independent corroboration is claimed. External evidence remains unverified.

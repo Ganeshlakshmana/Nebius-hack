@@ -22,6 +22,7 @@ class MemoRequest(BaseModel):
 
 
 class ResearchRequest(BaseModel):
+    official_domain: str | None = Field(default=None, max_length=253)
     company: str = Field(min_length=2, max_length=200)
     supplier_id: str | None = None
     component: str | None = Field(default=None, min_length=2, max_length=100)

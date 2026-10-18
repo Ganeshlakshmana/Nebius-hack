@@ -53,7 +53,7 @@ def test_research_followup_and_extract(client,monkeypatch):
     queries=[]
     def search(query,**kwargs):
         queries.append(query)
-        return [{'url':'https://example.com/recall','title':'Recall investigation','content':'Unverified recall allegation','published':None}]
+        return [{'url':'https://example.com/recall','title':'Example Rail issued a recall.','content':'Example Rail issued a recall of its product.','published':None}]
     monkeypatch.setattr(app.state.search,'search',search)
     monkeypatch.setattr(app.state.search,'extract',lambda urls:{'results':[{'url':urls[0],'content':'Page evidence'}],'failed_results':[],'status':'complete'})
     started=client.post('/research',json={'company':'Example Rail','component':'braking'}).json()

@@ -31,3 +31,6 @@ How we measure whether the agent is right. Run existing tests with `python -m py
 
 ## Executable trust regressions
 `tests/test_trust_evals.py` covers metric faithfulness, unsupported claims, incomplete comparisons, weight normalization, research follow-up and unresolved anonymous identity. CI: `.github/workflows/trust-evals.yml`.
+
+## Evidence triage update
+`services/research_evidence.py` classifies policy/process, negated/conditional, reported-incident candidates, ambiguous mentions and unresolved identity. Buyer-supplied domains use exact/subdomain boundaries and are not independently verified. Publication dates are labelled recent/historical/unknown/future. Decision actions cite evidence IDs and never approve suppliers. Tests: `tests/test_research_evidence.py`. Arbitrary component names are accepted; no component qualification is inferred from web text.
