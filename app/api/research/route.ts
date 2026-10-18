@@ -1,4 +1,8 @@
+import { enforcePublicRateLimit } from "@/lib/public-rate-limit";
+
 export async function POST(request: Request) {
+ const limited = enforcePublicRateLimit(request, "research", 3, 60 * 60 * 1000);
+ if (limited) return limited;
  let payload: unknown;
  try { payload=await request.json(); } catch { return Response.json({error:'Invalid JSON'}, {status:400}); }
  const base=(process.env.BACKEND_URL||'http://127.0.0.1:8000').replace(/\/$/,'');

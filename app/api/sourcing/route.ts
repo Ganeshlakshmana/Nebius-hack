@@ -1,4 +1,8 @@
+import { enforcePublicRateLimit } from "@/lib/public-rate-limit";
+
 export async function POST(request: Request) {
+  const limited = enforcePublicRateLimit(request, "sourcing", 20, 10 * 60 * 1000);
+  if (limited) return limited;
   let payload: unknown;
   try { payload = await request.json(); }
   catch { return Response.json({error:"Invalid JSON request"}, {status:400}); }

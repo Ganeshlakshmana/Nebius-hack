@@ -39,7 +39,6 @@ services:
     restart: unless-stopped
     environment:
       PUBLIC_HOST: ${PUBLIC_HOST:?Set PUBLIC_HOST in deploy/.env}
-      JURY_PASSWORD_HASH: ${JURY_PASSWORD_HASH:?Run deploy/launch.sh to generate the hash}
     ports:
       - "80:80"
       - "443:443"

@@ -1,4 +1,8 @@
+import { enforcePublicRateLimit } from "@/lib/public-rate-limit";
+
 export async function POST(request: Request) {
+ const limited = enforcePublicRateLimit(request, "commercial", 12, 10 * 60 * 1000);
+ if (limited) return limited;
  let payload:unknown;
  try {payload=await request.json();}catch{return Response.json({error:"Invalid JSON"},{status:400})}
  const webhook=process.env.N8N_COMMERCIAL_WEBHOOK;

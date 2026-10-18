@@ -1,7 +1,6 @@
 {$PUBLIC_HOST} {
   encode zstd gzip
-  basic_auth {
-    jury {$JURY_PASSWORD_HASH}
+  reverse_proxy frontend:3000 {
+    header_up X-Real-IP {remote_host}
   }
-  reverse_proxy frontend:3000
 }
